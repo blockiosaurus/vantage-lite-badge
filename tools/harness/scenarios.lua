@@ -145,7 +145,7 @@ return {
     shows("Gh9Z..tKJr")
     H.advance(3000)
     shows("DONE")
-    shows("Landed!")
+    shows("Landed! Scan it")
     expect(qr.value:find("^https://solscan.io/tx/5Ufg"), qr.value)
     expect(b.toasts[#b.toasts] == "Wallet Gh9Z..tKJr saved for Portfolio", b.toasts[#b.toasts])
     -- the poll stops once it has landed
@@ -298,6 +298,21 @@ return {
     H.press("back")
     H.choose("Pulse")
     shows("Wi-Fi is off")
+  end},
+
+  {name = "An empty list never shows (Solana OS would print 'Nothing here yet' over it)", run = function()
+    local b = H.boot()
+    H.flush()
+    b.offline = true -- Discover's list never arrives
+    H.choose("Discover")
+    shows("Wi-Fi is off")
+    expect(not H.empty_list_showing(), "Discover shows an empty list behind its message")
+    H.boot() H.flush()
+    H.choose("Search")
+    expect(not H.empty_list_showing(), "Search shows an empty list behind the keyboard")
+    H.boot() H.flush()
+    H.choose("Portfolio")
+    expect(not H.empty_list_showing(), "Portfolio shows an empty list with no wallet")
   end},
 
   {name = "Late answers for a screen that's gone are dropped", run = function()

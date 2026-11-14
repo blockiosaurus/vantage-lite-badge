@@ -27,4 +27,4 @@ if [ ! -x "$bin" ] || [ "$here/host.c" -nt "$bin" ]; then
 fi
 
 cd "$root"
-"$bin" "$here/harness.lua" "$root/badge" "$here/fixtures.json"
+"$bin" "$here/harness.lua" "$root/badge" "$here/fixtures.json" "$@"

@@ -23,6 +23,16 @@ with a 320×218 screen, six buttons and eight RGB LEDs.
 | **Ask Vantage**: canned or typed questions, answered by Claude from a live market and token snapshot (optional, needs your own Anthropic key) | Assistant |
 | **Open in Vantage**: a QR code for the token's public page on vantage.metaplex.com | n/a |
 
+## Screens
+
+![Vantage Lite's screens](docs/screens/contact-sheet.png)
+
+These are renders, not photos of a badge. Every object, position, text and colour comes
+from the app's own draw calls, run on the badge's Lua 5.5 in the harness. The drawing follows
+Solana OS's widgets and dark theme. The fonts differ: the badge uses ABC Diatype, which is
+licensed to the firmware only, so the renders use Inter. Token data is sample data with real
+names and made-up numbers. One screen per file is in [`docs/screens/`](docs/screens/).
+
 ## How it fits together
 
 ```
@@ -64,6 +74,7 @@ transaction itself, so there is no Jito bundle or MEV protection. No fee is adde
 |---|---|
 | `badge/` | The Solana OS app: `main.lua`, `app.json`, `lib/` (navigation, API client, LEDs, ticker, chart), `screens/` |
 | `server/` | The Node server: routes in `src/app.ts`, swap intents in `src/swap.ts`, state in Redis (`src/kv.ts`, `src/state.ts`), upstream clients in `src/sources/`, entry point `src/main.ts` |
+| `tools/screens/` | Walks the app through its screens on the harness (`shots.lua`) and draws them as Solana OS would (`render.py`) |
 | `tools/harness/` | Runs the badge app on the badge's own Lua 5.5, built natively from solana-os, against a recorded Solana OS (ui, http, timer, led, storage…) with the limits that matter checked as errors |
 
 ## Set up
@@ -129,7 +140,7 @@ cd server && npm run typecheck
 ```
 
 ```bash
-tools/harness/run.sh             # 19 scenarios: every screen, key by key, on the badge's Lua 5.5
+tools/harness/run.sh             # 20 scenarios: every screen, key by key, on the badge's Lua 5.5
 ```
 
 `run.sh` clones solana-os into `.cache/` the first time (or set `SOLANA_OS=` to a checkout) and
@@ -138,6 +149,17 @@ which is what the server really answers. Regenerate it after changing a reply sh
 
 ```bash
 cd server && EXPORT_FIXTURES=../tools/harness/fixtures.json npx vitest run test/export-fixtures.test.ts
+```
+
+To regenerate the screens (needs Pillow and qrcode). `render.py` also prints any label that
+overlaps another or runs into the hint bar:
+
+```bash
+tools/harness/run.sh tools/screens/shots.lua tools/screens/out/shots.json
+```
+
+```bash
+python3 tools/screens/render.py tools/screens/out/shots.json tools/screens/out
 ```
 
 To run the server locally on port 8787, without badge signatures and with in-memory state:

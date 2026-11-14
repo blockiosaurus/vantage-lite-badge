@@ -9,4 +9,11 @@ function R.list(items)
   return rows
 end
 
+-- Fill a list, hiding it while it is empty: Solana OS draws "Nothing here
+-- yet" in the middle of an empty list, over whatever the screen says there.
+function R.set(list, items)
+  list:items(items)
+  list:show(#items > 0)
+end
+
 return R

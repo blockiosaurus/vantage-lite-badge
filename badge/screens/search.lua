@@ -15,7 +15,7 @@ local function run(q)
     if not ok then status:text(d) return end
     found = d.items or {}
     status:text(#found == 0 and ("No token matches " .. q) or "")
-    list:items(rows.list(found))
+    rows.set(list, rows.list(found))
   end)
 end
 
@@ -37,6 +37,7 @@ function S.enter(p)
     if t then nav.push(require("screens.token"), {m = t.m, s = t.s}) end
   end})
   status = theme.notice("", 96)
+  list:show(false)
   ui.hint("SELECT open   RIGHT new search   CANCEL back")
   if p.q then run(p.q) else ask() end
 end

@@ -20,6 +20,21 @@ function X.chunks(s, max)
   return out
 end
 
+-- Like chunks, but breaking at the ends of sentences, so the gaps between
+-- blocks fall where a paragraph break would. A sentence longer than `max`
+-- is split between words.
+function X.sentences(s, max)
+  local out = {}
+  for sentence in (s .. " "):gmatch("(.-[%.%?!])%s+") do
+    for _, piece in ipairs(X.chunks(sentence, max)) do out[#out + 1] = piece end
+  end
+  local tail = s:match("[%.%?!]%s+([^%.%?!]+)$") or (#out == 0 and s or nil)
+  if tail and tail:match("%S") then
+    for _, piece in ipairs(X.chunks(tail, max)) do out[#out + 1] = piece end
+  end
+  return out
+end
+
 -- SOL from lamports (a 32-bit integer): 100000000 -> "0.1".
 function X.sol(lamports)
   local s = string.rep("0", 10) .. tostring(lamports)

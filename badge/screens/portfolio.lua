@@ -2,6 +2,7 @@
 -- the Solana address the owner linked at /profile.
 local api = require("lib.api")
 local nav = require("lib.nav")
+local rowlib = require("lib.rows")
 local store = require("lib.store")
 local text = require("lib.text")
 local theme = require("lib.theme")
@@ -24,7 +25,7 @@ local function load(wallet)
     for i, h in ipairs(held) do
       rows[i] = {title = h.s .. "  " .. h.v, sub = h.a .. " " .. h.s, right = h.cn and string.format("%+.1f%%", h.cn) or ""}
     end
-    list:items(rows)
+    rowlib.set(list, rows)
   end)
 end
 
@@ -38,6 +39,7 @@ function PF.enter()
     if h and h.m ~= ticker.SOL then nav.push(require("screens.token"), {m = h.m, s = h.s}) end
   end})
   status = theme.notice("", 110)
+  list:show(false)
   ui.hint("SELECT open   CANCEL back")
 
   if store.wallet then load(store.wallet) return end

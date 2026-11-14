@@ -26,10 +26,10 @@ local function fill(data)
   note:text(data.t or "")
   if #shown == 0 then
     status:text("Nothing here right now")
-    list:items({})
+    rows.set(list, {})
   else
     status:text("")
-    list:items(rows.list(shown))
+    rows.set(list, rows.list(shown))
   end
 end
 
@@ -38,7 +38,7 @@ local function load()
   local c = cache[id]
   if c and sys.millis() - c.at < 30000 then fill(c) return end
   status:text("Loading...")
-  list:items({})
+  rows.set(list, {})
   api.get("/v1/list/" .. id, function(ok, d)
     if not ok then status:text(d) return end
     d.at = sys.millis()

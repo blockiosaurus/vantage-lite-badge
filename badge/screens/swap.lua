@@ -23,7 +23,7 @@ local function done(st)
   stop()
   if st.ok then
     leds.celebrate()
-    w.status:text("Landed! Scan for the transaction.")
+    w.status:text("Landed! Scan it")
     w.status:color(theme.UP)
     w.state:text("DONE")
     w.state:color(theme.UP)
@@ -35,7 +35,7 @@ local function done(st)
     end
   else
     leds.fail()
-    w.status:text("Failed on chain. Nothing was swapped; only the network fee was spent.")
+    w.status:text("Failed on chain. Only the fee was spent")
     w.status:color(theme.DOWN)
     w.state:text("FAILED")
     w.state:color(theme.DOWN)
@@ -48,14 +48,14 @@ local function check()
     if finished or not ok then return end
     if st.st == "signing" then
       w.state:text("SIGNING")
-      w.status:text("Approve it in " .. text.short(st.w) .. "'s wallet.")
+      w.status:text("Approve in " .. text.short(st.w))
     elseif st.st == "done" then
       done(st)
     elseif st.st == "expired" then
       finished = true
       stop()
       w.state:text("EXPIRED")
-      w.status:text("Nothing landed. Back out and try again.")
+      w.status:text("Nothing landed. Try again")
       leds.off()
     end
   end)
@@ -66,13 +66,16 @@ function SW.enter(p)
   w, id, finished = {}, nil, false
   stop()
   theme.chrome(p.side == "buy" and "Buy" or "Sell", t.s)
-  local x, cw = 192, ui.W - 200
+  -- QR on the left (160 px), a 136 px column on the right. Each line has
+  -- room for what it holds: the route may take two lines, status up to three.
+  local x, cw = 176, ui.W - 184
   w.side = ui.label(x, 32, (p.side == "buy" and "BUY " or "SELL ") .. t.s, {size = 20, color = theme.BLUE, w = cw})
   w.amount = ui.label(x, 58, p.side == "buy" and (text.sol(p.lamports) .. " SOL") or (p.percent .. "% of it"), {size = 14, w = cw})
   w.out = ui.label(x, 76, "", {size = 14, color = "dim", w = cw})
-  w.route = ui.label(x, 94, "", {size = 12, color = "dim", w = cw})
-  w.state = ui.label(x, 112, "PREPARING", {size = 14, color = theme.BLUE, w = cw})
-  w.status = ui.label(x, 130, "Getting a quote...", {size = 12, w = cw})
+  w.route = ui.label(x, 96, "", {size = 12, color = "dim", w = cw})
+  w.impact = ui.label(x, 126, "", {size = 12, color = "dim", w = cw})
+  w.state = ui.label(x, 146, "PREPARING", {size = 14, color = theme.BLUE, w = cw})
+  w.status = ui.label(x, 164, "Getting a quote...", {size = 12, w = cw})
   ui.hint("CANCEL back")
   leds.busy()
 
@@ -95,11 +98,12 @@ function SW.enter(p)
     end
     id = d.id
     w.out:text(d.out)
-    w.route:text(d.route .. (d.impact ~= "-" and ("  impact " .. d.impact) or ""))
+    w.route:text(d.route)
+    if d.impact ~= "-" then w.impact:text("Impact " .. d.impact) end
     w.state:text("SCAN")
-    w.status:text("Scan with Phantom or Solflare's own scanner. Wallet on mainnet.")
+    w.status:text("Scan in Phantom or Solflare")
     if ui.qr then
-      w.qr = ui.qr(8, 32, 176, d.url)
+      w.qr = ui.qr(8, 34, 160, d.url)
     else
       w.status:text("Needs Solana OS 0.5.3 for QR codes")
       return

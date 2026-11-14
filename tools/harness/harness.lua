@@ -184,18 +184,18 @@ function ui.label(x, y, text, opts)
   colour(opts.color)
   if opts.size and not ({[12] = 1, [14] = 1, [20] = 1, [32] = 1})[opts.size] then fail("label size " .. opts.size) end
   if opts.align and opts.align ~= "left" and not opts.w then fail("align needs w") end
-  local l = object("label", {x = x, y = y, value = text, colour = opts.color, size = opts.size or 14})
+  local l = object("label", {x = x, y = y, value = text, colour = opts.color, size = opts.size or 14, w = opts.w, align = opts.align})
   function l:text(s) check_text("label:text", s) self.value = s end
   return add(l)
 end
 function ui.rect(x, y, w, h, opts)
   colour(opts and opts.color)
-  local r = object("rect", {x = x, y = y, w = w, h = h})
+  local r = object("rect", {x = x, y = y, w = w, h = h, colour = opts and opts.color, radius = opts and opts.radius})
   function r:size(nw, nh) self.w, self.h = nw, nh end
   return add(r)
 end
 function ui.bar(x, y, w, h, value)
-  local b = object("bar", {x = x, y = y, value = value})
+  local b = object("bar", {x = x, y = y, w = w, h = h, value = value})
   function b:set(v)
     if type(v) ~= "number" or v < 0 or v > 100 then fail("bar:set 0..100, got " .. tostring(v)) end
     self.value = v
@@ -217,7 +217,7 @@ local function check_rows(items)
 end
 function ui.list(x, y, w, h, items, opts)
   check_rows(items)
-  local l = object("list", {x = x, y = y, rows = items, sel = 1, opts = opts or {}})
+  local l = object("list", {x = x, y = y, w = w, h = h, rows = items, sel = 1, opts = opts or {}})
   function l:items(new) check_rows(new) self.rows = new if self.sel > #new then self.sel = math.max(1, #new) end end
   function l:selected() return #self.rows > 0 and self.sel or nil end
   function l:select(i) self.sel = i end
@@ -226,19 +226,20 @@ end
 function ui.qr(x, y, size, text)
   if size < 25 or size > 218 then fail("qr size 25..218") end
   if #text > 256 then fail("qr text over 256 bytes") end
-  local q = object("qr", {x = x, y = y, value = text})
+  local q = object("qr", {x = x, y = y, size = size, value = text})
   function q:text(s) if #s > 256 then fail("qr text over 256 bytes") end self.value = s end
   return add(q)
 end
 function ui.canvas(x, y, w, h, opts)
   if w > 1024 or h > 1024 then fail("canvas over 1024 px a side") end
-  local c = object("canvas", {x = x, y = y, w = w, h = h, ops = 0})
+  local c = object("canvas", {x = x, y = y, w = w, h = h, draws = {}})
   local function arg(n) if type(n) ~= "number" then fail("canvas: number expected") end end
-  function c:clear() self.ops = 0 end
-  function c:pixel(px, py, col) arg(px) arg(py) colour(col) self.ops = self.ops + 1 end
-  function c:rect(px, py, rw, rh, col) arg(px) arg(rw) colour(col) self.ops = self.ops + 1 end
-  function c:line(x1, y1, x2, y2, col) arg(x1) arg(y1) arg(x2) arg(y2) colour(col) self.ops = self.ops + 1 end
-  function c:image() self.ops = self.ops + 1 end
+  local function draw(op) c.draws[#c.draws + 1] = op end
+  function c:clear() self.draws = {} end
+  function c:pixel(px, py, col) arg(px) arg(py) colour(col) draw({"p", px, py, col}) end
+  function c:rect(px, py, rw, rh, col) arg(px) arg(rw) colour(col) draw({"r", px, py, rw, rh, col}) end
+  function c:line(x1, y1, x2, y2, col) arg(x1) arg(y1) arg(x2) arg(y2) colour(col) draw({"l", x1, y1, x2, y2, col}) end
+  function c:image() end
   function c:get() return nil end
   return add(c)
 end
@@ -275,9 +276,12 @@ local function route(method, url, body)
   if url:sub(1, #SERVER) ~= SERVER then fail("http to a host not in app.json: " .. url) end
   local path = url:sub(#SERVER + 1)
   B.requests[#B.requests + 1] = method .. " " .. path
+  -- The most specific override that matches wins.
+  local best, best_len
   for pattern, answer in pairs(B.overrides) do
-    if path:find(pattern) then return answer end
+    if path:find(pattern) and (not best_len or #pattern > best_len) then best, best_len = answer, #pattern end
   end
+  if best then return best end
   local p = path:gsub("%?.*$", "")
   local key
   if p == "/v1/pulse" then key = "pulse"
@@ -494,7 +498,57 @@ H.json, H.fixtures, H.WALLET = json, fixtures, WALLET
 function H.badge() return B end
 function H.env() return ENV end
 
+-- The screen as data, for tools/screens/render.py: every live UI object in the
+-- order drawn, the hint, the last toast if asked, and the LEDs.
+function H.snapshot(name, opts)
+  opts = opts or {}
+  local objs = {}
+  for _, o in ipairs(B.objs) do
+    if not o.removed then
+      local t = {kind = o.kind, x = o.x, y = o.y, visible = o.visible}
+      if o.kind == "label" then
+        t.text, t.colour, t.size, t.w, t.align = o.value, o.colour, o.size, o.w, o.align
+      elseif o.kind == "rect" then
+        t.w, t.h, t.colour, t.radius = o.w, o.h, o.colour, o.radius
+      elseif o.kind == "bar" then
+        t.w, t.h, t.value = o.w, o.h, o.value
+      elseif o.kind == "list" then
+        t.w, t.h, t.sel, t.rows = o.w, o.h, o.sel, {}
+        for i, r in ipairs(o.rows) do
+          t.rows[i] = type(r) == "table" and {title = r.title or "", sub = r.sub or "", right = r.right or ""} or {title = r, sub = "", right = ""}
+        end
+      elseif o.kind == "qr" then
+        t.size, t.text = o.size, o.value
+      elseif o.kind == "canvas" then
+        t.w, t.h, t.draws = o.w, o.h, o.draws
+      end
+      objs[#objs + 1] = t
+    end
+  end
+  local leds = {}
+  for i, c in ipairs(B.leds) do leds[i] = {c[1], c[2], c[3]} end
+  local dialog = B.inputs[1] and {kind = B.inputs[1].kind, text = B.inputs[1].text} or nil
+  return {
+    name = name, caption = opts.caption, bg = B.bg, hint = B.hint, objs = objs,
+    toast = opts.toast and B.toasts[#B.toasts] or nil, dialog = dialog, leds = leds,
+  }
+end
+
+-- True while a list with no rows is showing: Solana OS would draw its
+-- "Nothing here yet" over the screen.
+function H.empty_list_showing()
+  for _, o in ipairs(B.objs) do
+    if o.kind == "list" and not o.removed and o.visible and #o.rows == 0 then return true end
+  end
+  return false
+end
+
 ------------------------------------------------------------------ run the scenarios
+-- With a third argument, run that script (e.g. tools/screens/shots.lua) instead.
+if arg[3] then
+  assert(load(assert(read_file(arg[3])), "@" .. arg[3], "t", setmetatable({H = H, arg = arg}, {__index = _G})))()
+  return
+end
 local scenarios = assert(load(assert(read_file(APP_DIR .. "/../tools/harness/scenarios.lua")), "@scenarios.lua", "t", setmetatable({H = H}, {__index = _G})))()
 local passed, failed = 0, 0
 for _, s in ipairs(scenarios) do
