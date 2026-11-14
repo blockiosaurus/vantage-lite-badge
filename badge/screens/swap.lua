@@ -1,4 +1,4 @@
--- The swap: the server builds it through Vantage's trade routes for whichever
+-- The swap: the server builds it with Jupiter's public Swap API for whichever
 -- wallet scans the QR code (a Solana Pay transaction request). The badge never
 -- holds a key; it shows the code and watches for the transaction to land.
 local api = require("lib.api")
@@ -72,7 +72,7 @@ function SW.enter(p)
   w.out = ui.label(x, 76, "", {size = 14, color = "dim", w = cw})
   w.route = ui.label(x, 94, "", {size = 12, color = "dim", w = cw})
   w.state = ui.label(x, 112, "PREPARING", {size = 14, color = theme.BLUE, w = cw})
-  w.status = ui.label(x, 130, "Asking Vantage for a quote...", {size = 12, w = cw})
+  w.status = ui.label(x, 130, "Getting a quote...", {size = 12, w = cw})
   ui.hint("CANCEL back")
   leds.busy()
 
@@ -84,7 +84,6 @@ function SW.enter(p)
     percent = p.percent,
     slippageBps = s.slip,
     tier = s.tier,
-    mev = s.mev,
   }, function(ok, d)
     leds.off()
     if not ok then

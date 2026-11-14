@@ -5,7 +5,6 @@ export interface Env {
   PUBLIC_ORIGIN: string;
   BADGE_APP_ID: string;
   REQUIRE_BADGE_SIGNATURE?: string;
-  VANTAGE_ORIGIN: string;
   JUPITER_ORIGIN: string;
   JUPITER_API_KEY?: string;
   SOLANA_RPC_URL: string;

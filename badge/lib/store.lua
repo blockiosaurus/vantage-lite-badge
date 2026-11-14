@@ -5,8 +5,7 @@ local S = {}
 local DEFAULTS = {
   buy = 100000000,   -- lamports per buy: 0.1 SOL (fits a 32-bit integer up to ~2.1 SOL)
   slip = 100,        -- slippage, basis points
-  tier = "normal",   -- Vantage priority fee tier: normal | fast | turbo
-  mev = false,       -- Jito MEV protection (tips 0.001 SOL)
+  tier = "normal",   -- priority fee: normal | fast | turbo (capped at 0.0005 / 0.001 / 0.003 SOL)
   ticker = true,     -- light the LEDs with the watchlist
 }
 

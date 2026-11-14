@@ -9,7 +9,7 @@
 //      shows it as a QR code.
 //   3. The player scans it in Phantom or Solflare. The wallet GETs the label,
 //      then POSTs its account. We quote and build the swap for that account
-//      through Vantage's own trade routes and hand the wallet the transaction.
+//      through Jupiter's public Swap API and hand the wallet the transaction.
 //   4. The wallet signs and sends it. Nothing comes back to us, so the badge
 //      polls the intent and we look for the wallet's newest transaction whose
 //      blockhash is one we handed out.
@@ -21,7 +21,7 @@ import { decodeBase58, encodeBase58, isAddress } from './base58';
 import { SOL_MINT, type Env } from './env';
 import { amount, pct, units } from './format';
 import { recentSignatures, tokenBalance, transactionBlockhash } from './sources/rpc';
-import { buildSwap, quote, type PriorityTier } from './sources/vantage';
+import { buildSwap, quote, type PriorityTier } from './sources/swap-api';
 import { UpstreamError } from './upstream';
 
 export type Side = 'buy' | 'sell';
@@ -38,7 +38,6 @@ export interface IntentInput {
   percent?: number;
   slippageBps: number;
   tier: PriorityTier;
-  mev: boolean;
   badge: string;
 }
 
@@ -86,18 +85,17 @@ export function validateIntent(body: unknown): Omit<IntentInput, 'id' | 'badge' 
   }
   const tier = (b.tier ?? 'normal') as PriorityTier;
   if (!['normal', 'fast', 'turbo'].includes(tier)) return 'tier must be normal, fast or turbo';
-  const mev = b.mev === true;
   if (b.side === 'buy') {
     const lamports = String(b.lamports ?? '');
     if (!/^\d{1,19}$/.test(lamports) || BigInt(lamports) < 1_000_000n) {
       return 'lamports must be at least 1000000 (0.001 SOL)';
     }
     if (BigInt(lamports) > MAX_BUY_LAMPORTS) return 'at most 5 SOL per badge swap';
-    return { side: 'buy', mint: b.mint, lamports, slippageBps, tier, mev };
+    return { side: 'buy', mint: b.mint, lamports, slippageBps, tier };
   }
   const percent = Number(b.percent);
   if (!Number.isInteger(percent) || percent < 1 || percent > 100) return 'percent must be 1..100';
-  return { side: 'sell', mint: b.mint, percent, slippageBps, tier, mev };
+  return { side: 'sell', mint: b.mint, percent, slippageBps, tier };
 }
 
 /** The 32-byte recent blockhash of a serialized legacy or v0 transaction, in base58. */
@@ -187,7 +185,7 @@ export class SwapLogic {
         amount: inAmount,
         slippageBps: s.slippageBps,
       });
-      const built = await buildSwap(this.env, q, account, { priorityFeeTier: s.tier, mev: s.mev });
+      const built = await buildSwap(this.env, q, account, s.tier);
       s.wallet = account;
       s.handouts.push({ blockhash: blockhashOf(built.swapTransaction), at: this.now() });
       await this.store.put('intent', s);
@@ -260,7 +258,7 @@ export async function preview(
   i: Pick<IntentInput, 'side' | 'mint' | 'symbol' | 'decimals' | 'lamports' | 'percent' | 'slippageBps'>,
 ): Promise<{ out: string; impact: string; route: string }> {
   if (i.side === 'sell') {
-    return { out: `${i.percent}% of your ${i.symbol}`, impact: '-', route: 'Vantage' };
+    return { out: `${i.percent}% of your ${i.symbol}`, impact: '-', route: 'Jupiter' };
   }
   const q = await quote(env, {
     inputMint: SOL_MINT,
@@ -273,6 +271,6 @@ export async function preview(
   return {
     out: `~${amount(q.outAmount, i.decimals)} ${i.symbol}`,
     impact,
-    route: [...new Set(labels)].slice(0, 2).join(' > ') || 'Vantage',
+    route: [...new Set(labels)].slice(0, 2).join(' > ') || 'Jupiter',
   };
 }

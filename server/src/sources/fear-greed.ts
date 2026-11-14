@@ -1,5 +1,4 @@
-// alternative.me's Crypto Fear & Greed Index, the same one Vantage's market
-// mood block shows.
+// alternative.me's Crypto Fear & Greed Index: the market mood on Pulse and the LEDs.
 
 import { fetchJson } from '../upstream';
 

@@ -142,6 +142,28 @@ describe('swaps', () => {
     expect(res).toEqual({ status: 429, body: { error: 'daily swap limit reached' } });
   });
 
+  it('shows why Jupiter could not route a token', async () => {
+    const fake = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.includes('/swap/v1/quote')) {
+        return Response.json({ error: 'Could not find any route', errorCode: 'COULD_NOT_FIND_ANY_ROUTE' }, { status: 400 });
+      }
+      return fake(input, init);
+    });
+    const res = await call(post('/v1/swap', { side: 'buy', mint: BONK, lamports: '100000000' }));
+    expect(res).toEqual({ status: 502, body: { error: 'Could not find any route' } });
+  });
+
+  it('never calls Vantage', async () => {
+    const env = testEnv();
+    const created = await call(post('/v1/swap', { side: 'buy', mint: BONK, lamports: '100000000' }), env);
+    await handle(post(`/pay/${created.body.id}`, { account: WALLET }), env);
+    await call(get(`/v1/token/${BONK}`), env);
+    expect(world.calls.length).toBeGreaterThan(0);
+    expect(world.calls.filter((c) => /vantage|metaplex/i.test(c))).toEqual([]);
+  });
+
   it('turns an upstream failure into a short error', async () => {
     vi.stubGlobal('fetch', async () => new Response('down', { status: 503 }));
     const res = await call(post('/v1/swap', { side: 'buy', mint: BONK, lamports: '100000000' }));

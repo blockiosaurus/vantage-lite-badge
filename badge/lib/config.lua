@@ -3,5 +3,4 @@
 return {
   SERVER = "https://vantage-lite.example.workers.dev",
   VERSION = "1.0.0",
-  VANTAGE = "https://vantage.metaplex.com",
 }

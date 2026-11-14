@@ -1,4 +1,4 @@
--- Vantage's discovery lists: trending, top volume, new pairs, organic.
+-- Discovery lists: trending, top volume, new pairs, organic.
 local api = require("lib.api")
 local nav = require("lib.nav")
 local rows = require("lib.rows")

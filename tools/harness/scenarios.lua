@@ -131,7 +131,7 @@ return {
     H.press("select")
     H.press("select")
     H.choose("Buy Bonk")
-    shows("Slippage 1%  normal  MEV off")
+    shows("Slippage 1%   Priority normal")
     expect(H.rows():find("0.1 SOL"), H.rows())
     H.choose("0.25 SOL")
     expect(b.requests[#b.requests] == "POST /v1/swap", b.requests[#b.requests])
@@ -181,9 +181,9 @@ return {
     H.choose("Discover")
     H.press("select") H.press("select")
     H.choose("Buy Bonk")
-    b.overrides["^/v1/swap$"] = {status = 502, data = {error = "vantage is unavailable"}}
+    b.overrides["^/v1/swap$"] = {status = 502, data = {error = "jupiter is unavailable"}}
     H.choose("0.1 SOL")
-    shows("NO QUOTE") shows("vantage is unavailable")
+    shows("NO QUOTE") shows("jupiter is unavailable")
     expect(#H.find("qr") == 0)
   end},
 
@@ -274,18 +274,17 @@ return {
     H.choose("Default buy")
     H.choose("Slippage")
     H.choose("Priority fee")
-    H.choose("MEV protection")
     H.choose("LED ticker")
     expect(lit() == 0, "LEDs off with the ticker off")
     local s = H.json.decode(b.storage.settings)
-    expect(s.buy == 250000000 and s.slip == 300 and s.tier == "fast" and s.mev == true and s.ticker == false,
+    expect(s.buy == 250000000 and s.slip == 300 and s.tier == "fast" and s.mev == nil and s.ticker == false,
       b.storage.settings)
     H.boot(b.storage)
     H.flush()
     H.choose("Discover")
     H.press("select") H.press("select")
     H.choose("Buy Bonk")
-    shows("Slippage 3%  fast  MEV on")
+    shows("Slippage 3%   Priority fast")
     expect(H.find("list")[1].sel == 3, "default buy preselected")
   end},
 

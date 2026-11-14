@@ -1,4 +1,4 @@
--- Vantage's palette on the badge: one brand blue used scarcely, market green
+-- A Vantage-like palette on the badge: one brand blue used scarcely, market green
 -- and red for direction only, everything else from the badge's own theme so it
 -- follows Dark/Light.
 local T = {

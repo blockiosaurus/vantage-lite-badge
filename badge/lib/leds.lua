@@ -1,4 +1,4 @@
--- The badge's eight RGB LEDs as Vantage's ambient display. 1..6 across the
+-- The badge's eight RGB LEDs as an ambient market display. 1..6 across the
 -- top carry the watchlist (one token each: green up, red down, brighter the
 -- bigger the move); 7..8 on the edge carry SOL. Swaps get a green chase or a
 -- red flash. With no `led` permission or no LEDs, every call does nothing.

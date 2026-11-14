@@ -10,7 +10,7 @@ local SELLS = {25, 50, 100}
 
 local function settings_line()
   local s = store.settings
-  return "Slippage " .. text.bps(s.slip) .. "  " .. s.tier .. "  MEV " .. (s.mev and "on" or "off")
+  return "Slippage " .. text.bps(s.slip) .. "   Priority " .. s.tier
 end
 
 function TR.enter(p)

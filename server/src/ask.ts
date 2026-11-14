@@ -1,4 +1,4 @@
-// Ask Vantage: the terminal's assistant, shrunk to a badge. The badge sends a
+// Ask Vantage: an assistant in the spirit of the terminal's, on a badge. The badge sends a
 // question (and the token on screen, if any); we hand Claude a snapshot of the
 // market and that token, and send back a short plain-text answer that fits on
 // a 320x218 screen. Read-only: it can't trade, the badge's Buy/Sell can.
@@ -10,7 +10,7 @@ import { list, pulse, token } from './market';
 export const ASK_MODEL = 'claude-opus-5-5';
 export const MAX_ANSWER_CHARS = 600;
 
-const SYSTEM = `You are Vantage Lite, the assistant of the Vantage trading terminal, running on a Solana conference badge with a 320x218 screen.
+const SYSTEM = `You are the assistant in Vantage Lite, an unofficial badge app inspired by the Vantage trading terminal, running on a Solana conference badge with a 320x218 screen. You are not affiliated with Vantage or Metaplex.
 Answer the player's question about Solana tokens and the market using the snapshot you are given.
 Rules:
 - Plain text only: no markdown, no bullet symbols, no emoji. ASCII characters only.

@@ -1,5 +1,5 @@
--- Trade defaults Vantage users know: buy size, slippage, priority, MEV
--- protection; plus the LED ticker and the remembered wallet.
+-- Trade defaults: buy size, slippage and priority fee; plus the LED ticker
+-- and the remembered wallet.
 local config = require("lib.config")
 local store = require("lib.store")
 local text = require("lib.text")
@@ -24,11 +24,10 @@ local function items()
   return {
     {title = "Default buy", right = text.sol(s.buy) .. " SOL"},
     {title = "Slippage", right = text.bps(s.slip)},
-    {title = "Priority fee", right = s.tier},
-    {title = "MEV protection", sub = "Jito bundle, 0.001 SOL tip", right = s.mev and "on" or "off"},
+    {title = "Priority fee", sub = "Capped at 0.0005 / 0.001 / 0.003 SOL", right = s.tier},
     {title = "LED ticker", sub = "Watchlist on the LEDs", right = s.ticker and "on" or "off"},
     {title = "Wallet", sub = store.wallet and "SELECT to forget" or "Set by your first swap", right = store.wallet and text.short(store.wallet) or "none"},
-    {title = "About", sub = config.SERVER:gsub("^https://", ""), right = "v" .. config.VERSION},
+    {title = "About", sub = "Unofficial. Not made by Vantage or Metaplex", right = "v" .. config.VERSION},
   }
 end
 
@@ -39,11 +38,10 @@ function ST.enter()
     if i == 1 then s.buy = next_of(BUYS, s.buy)
     elseif i == 2 then s.slip = next_of(SLIPS, s.slip)
     elseif i == 3 then s.tier = next_of(TIERS, s.tier)
-    elseif i == 4 then s.mev = not s.mev
-    elseif i == 5 then
+    elseif i == 4 then
       s.ticker = not s.ticker
       ticker.relight()
-    elseif i == 6 and store.wallet then
+    elseif i == 5 and store.wallet then
       store.wallet = nil
       ui.toast("Wallet forgotten")
     end

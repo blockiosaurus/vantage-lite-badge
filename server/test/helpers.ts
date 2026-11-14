@@ -53,6 +53,7 @@ export const HANDED_BLOCKHASH = new Uint8Array(32).fill(9);
 
 export interface World {
   calls: string[];
+  swapBodies: Record<string, any>[];
   rpc: Record<string, (params: unknown[]) => unknown>;
   anthropic?: (body: Record<string, unknown>) => unknown;
 }
@@ -60,6 +61,7 @@ export interface World {
 export function installWorld(over: Partial<World> = {}): World {
   const world: World = {
     calls: [],
+    swapBodies: [],
     rpc: {
       getTokenAccountsByOwner: () => ({
         value: [{ account: { data: { parsed: { info: { tokenAmount: { amount: '1000000' } } } } } }],
@@ -117,10 +119,9 @@ export function installWorld(over: Partial<World> = {}): World {
     if (url.host === 'api.alternative.me') {
       return json({ data: [{ value: '64', value_classification: 'Greed' }] });
     }
-    if (url.host === 'vantage.test') {
-      if (url.pathname === '/api/trade/quote') {
+    if (url.host === 'jup.test' && url.pathname.startsWith('/swap/v1/')) {
+      if (url.pathname === '/swap/v1/quote') {
         return json({
-          success: true,
           inputMint: url.searchParams.get('inputMint'),
           inAmount: url.searchParams.get('amount'),
           outputMint: url.searchParams.get('outputMint'),
@@ -132,9 +133,9 @@ export function installWorld(over: Partial<World> = {}): World {
           routePlan: [{ swapInfo: { label: 'Raydium CLMM' } }, { swapInfo: { label: 'Meteora DLMM' } }],
         });
       }
-      if (url.pathname === '/api/trade/swap') {
+      if (url.pathname === '/swap/v1/swap') {
+        world.swapBodies.push(JSON.parse(String(init?.body)));
         return json({
-          success: true,
           swapTransaction: v0Transaction(HANDED_BLOCKHASH),
           lastValidBlockHeight: 300_000_000,
           prioritizationFeeLamports: 5000,
@@ -172,7 +173,6 @@ export function testEnv(over: Partial<Env> = {}): Env {
     PUBLIC_ORIGIN: 'https://lite.test',
     BADGE_APP_ID: 'vantage-lite',
     REQUIRE_BADGE_SIGNATURE: 'false',
-    VANTAGE_ORIGIN: 'https://vantage.test',
     JUPITER_ORIGIN: 'https://jup.test',
     SOLANA_RPC_URL: 'https://rpc.test',
     BADGE_SERVER_ORIGIN: 'https://badge.test',

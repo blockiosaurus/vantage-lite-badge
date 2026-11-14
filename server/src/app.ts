@@ -48,7 +48,10 @@ export async function handle(req: Request, env: Env): Promise<Response> {
   } catch (e) {
     if (e instanceof UpstreamError) {
       console.warn(`[upstream] ${e.source} ${e.status}: ${e.message}`);
-      return badgeError(e.status === 429 ? 'busy, try again soon' : `${e.source} is unavailable`, 502);
+      if (e.status === 429) return badgeError('busy, try again soon', 502);
+      // A 4xx says why (Jupiter: "Could not find any route"): worth showing.
+      if (e.status >= 400 && e.status < 500) return badgeError(e.message, 502);
+      return badgeError(`${e.source} is unavailable`, 502);
     }
     console.error('[handle]', e);
     return badgeError('server error', 500);

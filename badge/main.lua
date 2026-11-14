@@ -1,9 +1,11 @@
--- Vantage Lite: the Vantage trading terminal, on a Solana OS badge.
+-- Vantage Lite: an unofficial, third-party take on the Vantage trading
+-- terminal for the Solana OS badge. It uses only public APIs, nothing from
+-- Vantage's own backend.
 --
 -- Discover trending tokens, read a token's chart, stats and safety audit,
--- watch tokens on the LEDs with price alerts, ask the Vantage assistant, and
--- buy or sell through Vantage's own trade routes, signed on your phone with a
--- Solana Pay QR code (the badge never holds a key).
+-- watch tokens on the LEDs with price alerts, ask an assistant, and buy or
+-- sell through Jupiter, signed on your phone with a Solana Pay QR code (the
+-- badge never holds a key).
 --
 -- The data and the swap builds come from the Vantage Lite server (server/ in
 -- this repo); set its address in lib/config.lua and app.json "hosts".

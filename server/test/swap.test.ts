@@ -11,14 +11,13 @@ const BUY: IntentInput = {
   lamports: '100000000',
   slippageBps: 100,
   tier: 'normal',
-  mev: false,
   badge: '7K2Q9M',
 };
 
 describe('validateIntent', () => {
   it('accepts a buy and a sell', () => {
     expect(validateIntent({ side: 'buy', mint: BONK, lamports: '100000000' })).toMatchObject({ side: 'buy', slippageBps: 100 });
-    expect(validateIntent({ side: 'sell', mint: BONK, percent: 50, mev: true })).toMatchObject({ percent: 50, mev: true });
+    expect(validateIntent({ side: 'sell', mint: BONK, percent: 50, tier: 'turbo' })).toMatchObject({ percent: 50, tier: 'turbo' });
   });
 
   it('refuses what a badge should not send', () => {
@@ -67,7 +66,13 @@ describe('SwapLogic', () => {
     const built = await logic.buildFor(WALLET);
     expect(built).toMatchObject({ transaction: v0Transaction(HANDED_BLOCKHASH) });
     expect('message' in built && built.message).toBe('Buy ~4.32M Bonk for 0.1 SOL · from badge 7K2Q9M');
-    expect(world.calls).toContain('POST vantage.test/api/trade/swap');
+    expect(world.calls).toContain('POST jup.test/swap/v1/swap');
+    expect(world.swapBodies[0]).toMatchObject({
+      userPublicKey: WALLET,
+      dynamicComputeUnitLimit: true,
+      prioritizationFeeLamports: { priorityLevelWithMaxLamports: { priorityLevel: 'medium', maxLamports: 500_000 } },
+    });
+    expect(world.calls.some((c) => c.includes('vantage'))).toBe(false);
 
     world.rpc.getSignaturesForAddress = () => [{ signature: 'sigLanded', blockTime: Math.floor(now / 1000), err: null }];
     now += 3000;
@@ -104,7 +109,7 @@ describe('SwapLogic', () => {
     await logic.create({ ...BUY, side: 'sell', lamports: undefined, percent: 50 });
     const built = await logic.buildFor(WALLET);
     expect('message' in built && built.message).toMatch(/^Sell 5 Bonk for ~432.1 SOL/);
-    expect(world.calls.some((c) => c.startsWith('GET vantage.test/api/trade/quote'))).toBe(true);
+    expect(world.calls.some((c) => c.startsWith('GET jup.test/swap/v1/quote'))).toBe(true);
   });
 
   it('refuses a sell from a wallet that holds none', async () => {
