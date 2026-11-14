@@ -1,0 +1,12 @@
+{
+  "id": "vantage-lite",
+  "name": "Vantage Lite",
+  "version": "1.0.0",
+  "author": "@metaplex",
+  "summary": "Vantage on your badge: trending tokens, charts, safety reads, swaps signed on your phone, LED price ticker.",
+  "icon": "eye",
+  "accent": "0052FF",
+  "category": "tools",
+  "permissions": ["http", "led", "profile"],
+  "hosts": ["vantage-lite.example.workers.dev"]
+}
