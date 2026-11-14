@@ -26,7 +26,7 @@ with a 320×218 screen, six buttons and eight RGB LEDs.
 ## How it fits together
 
 ```
- badge (Lua, badge/)  ──http, signed by the badge server──►  Vantage Lite server (server/, a Cloudflare Worker)
+ badge (Lua, badge/)  ──http, signed by the badge server──►  Vantage Lite server (server/, Node on Railway)
    │                                                            ├─ Jupiter tokens + price API   (lists, token pages, prices, portfolio)
    │                                                            ├─ Jupiter Swap API             (quotes and swap transactions)
    │                                                            ├─ GeckoTerminal OHLCV          (charts)
@@ -63,43 +63,49 @@ transaction itself, so there is no Jito bundle or MEV protection. No fee is adde
 | Path | What |
 |---|---|
 | `badge/` | The Solana OS app: `main.lua`, `app.json`, `lib/` (navigation, API client, LEDs, ticker, chart), `screens/` |
-| `server/` | The Cloudflare Worker: routes in `src/app.ts`, swap intents in `src/swap.ts` (a Durable Object per intent), upstream clients in `src/sources/` |
+| `server/` | The Node server: routes in `src/app.ts`, swap intents in `src/swap.ts`, state in Redis (`src/kv.ts`, `src/state.ts`), upstream clients in `src/sources/`, entry point `src/main.ts` |
 | `tools/harness/` | Runs the badge app on the badge's own Lua 5.5, built natively from solana-os, against a recorded Solana OS (ui, http, timer, led, storage…) with the limits that matter checked as errors |
 
 ## Set up
 
-### 1. Deploy the server
+### 1. Deploy the server on Railway
+
+The server is plain Node (`server/`, `npm start`) with Redis for its state.
+
+1. In [Railway](https://railway.com), **New Project → Deploy from GitHub repo**, and pick this
+   repo.
+2. In the new service's **Settings**, set **Root Directory** to `/server`. Railway picks up
+   `server/railway.json`: `npm start`, a health check on `/healthz`, one replica.
+3. **Settings → Networking → Generate Domain.** That gives the service a public
+   `https://<name>.up.railway.app` address. The server reads it from Railway's
+   `RAILWAY_PUBLIC_DOMAIN`, and the Solana Pay QR codes point there. If you use a custom
+   domain instead, set `PUBLIC_ORIGIN` to `https://<your domain>`.
+4. Add Redis: in the project, **+ New → Database → Redis**. Then in the server service's
+   **Variables**, add `REDIS_URL` with the value `${{Redis.REDIS_URL}}`. Without Redis the
+   server still runs, but pending swaps and daily limits live in memory and reset on every
+   deploy.
+5. Optional variables:
+
+| Variable | What it does |
+|---|---|
+| `ANTHROPIC_API_KEY` | Turns on Ask Vantage. Without it the route answers 404 and the badge says so. |
+| `SOLANA_RPC_URL` | A private mainnet RPC. The public default is rate-limited; use your own for anything beyond a demo. |
+| `JUPITER_API_KEY` | With `JUPITER_ORIGIN=https://api.jup.ag`, Jupiter's keyed tier. The default is the free, rate-limited `lite-api.jup.ag`. |
+| `PUBLIC_ORIGIN` | Only for a custom domain (see step 3). |
+
+6. Deploy, then check it's up. It should print `ok`; the `/v1/...` routes answer 401 to
+   anything that isn't a badge.
 
 ```bash
-cd server
-npm install
+curl https://<name>.up.railway.app/healthz
 ```
 
-Edit `wrangler.jsonc`: set `PUBLIC_ORIGIN` to the Worker's public `https://` origin (the
-Solana Pay links point there). Then:
-
-```bash
-npx wrangler deploy
-```
-
-Optional secrets:
-
-```bash
-npx wrangler secret put ANTHROPIC_API_KEY
-```
-
-```bash
-npx wrangler secret put JUPITER_API_KEY
-```
-
-`ANTHROPIC_API_KEY` turns on Ask Vantage (without it the route answers 404 and the badge says so).
-`JUPITER_API_KEY` goes with `JUPITER_ORIGIN=https://api.jup.ag`; the default is the free,
-rate-limited `lite-api.jup.ag`. Point `SOLANA_RPC_URL` at a private RPC for anything beyond a
-demo: the public one is rate-limited too.
+Keep it at **one replica**: each swap's calls are queued in the process (`src/state.ts`), so
+two replicas could step on each other's writes.
 
 ### 2. Point the app at it
 
-Put the Worker's host in both `badge/app.json` (`"hosts"`) and `badge/lib/config.lua`
+Put the server's host (e.g. `<name>.up.railway.app`) in both `badge/app.json` (`"hosts"`) and `badge/lib/config.lua`
 (`SERVER`). The badge server refuses any host not in `hosts`.
 
 ### 3. Try it and publish
@@ -115,7 +121,7 @@ permissions.
 ## Develop
 
 ```bash
-cd server && npm test            # 36 tests: routes, swap lifecycle, badge signatures, formatting
+cd server && npm test            # 40 tests: routes, swap lifecycle, badge signatures, the Node server, formatting
 ```
 
 ```bash
@@ -134,8 +140,11 @@ which is what the server really answers. Regenerate it after changing a reply sh
 cd server && EXPORT_FIXTURES=../tools/harness/fixtures.json npx vitest run test/export-fixtures.test.ts
 ```
 
-To run the server locally without badge signatures, set `REQUIRE_BADGE_SIGNATURE` to `"false"`
-in `wrangler.jsonc` and run `npx wrangler dev`.
+To run the server locally on port 8787, without badge signatures and with in-memory state:
+
+```bash
+cd server && npm run dev
+```
 
 ## Notes
 

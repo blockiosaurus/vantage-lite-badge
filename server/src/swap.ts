@@ -15,7 +15,7 @@
 //      blockhash is one we handed out.
 //
 // The logic lives here against a small storage interface so it is testable in
-// Node; swap-intent.ts wraps it in a Durable Object, one per intent.
+// isolation; state.ts runs it over Redis, one queue per intent.
 
 import { decodeBase58, encodeBase58, isAddress } from './base58';
 import { SOL_MINT, type Env } from './env';

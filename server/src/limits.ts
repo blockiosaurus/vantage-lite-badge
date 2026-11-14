@@ -1,6 +1,6 @@
 // Per-badge daily caps, so one badge (or a script with its app id) can't run up
-// our Claude bill or flood the swap API with builds. Counted in the DailyLimit
-// Durable Object, one per (kind, caller, UTC day).
+// our Claude bill or flood the swap API with builds. Counted in the KV
+// store, one counter per (kind, caller, UTC day) (see state.ts).
 
 import type { Env } from './env';
 

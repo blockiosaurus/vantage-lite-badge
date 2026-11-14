@@ -21,8 +21,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - name: Bundle the Worker
-        run: npx wrangler deploy --dry-run --outdir dist
+      - name: Boots the way Railway runs it
+        run: |
+          PUBLIC_ORIGIN=https://ci.example PORT=8787 npm start &
+          for i in $(seq 1 30); do curl -sf localhost:8787/healthz && exit 0; sleep 1; done
+          exit 1
 
   badge:
     runs-on: ubuntu-latest

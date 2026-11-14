@@ -1,6 +1,5 @@
 // One fetch helper for every upstream: a timeout, a JSON parse, a typed error,
-// and for GETs that many badges ask at once (trending, pulse, charts), the
-// Cloudflare cache, so a room full of badges costs one upstream read per TTL.
+// and an in-process cache for the GETs many badges ask at once.
 
 export class UpstreamError extends Error {
   constructor(
@@ -14,24 +13,43 @@ export class UpstreamError extends Error {
 
 export interface FetchJsonOptions {
   source: string;
-  /** Seconds to keep a GET in the colo cache. 0 or absent: no cache. */
+  /** Seconds to keep a GET cached. 0 or absent: no cache. */
   ttl?: number;
   timeoutMs?: number;
   init?: RequestInit;
 }
 
-function colo(): Cache | null {
-  const c = (globalThis as { caches?: CacheStorage & { default?: Cache } }).caches;
-  return c?.default ?? null;
+// A small in-process cache for GETs that every badge asks (trending, pulse,
+// charts), so a room full of badges costs one upstream read per TTL.
+const CACHE_MAX = 500;
+const cache = new Map<string, { text: string; expires: number }>();
+
+function cached(url: string): string | null {
+  const e = cache.get(url);
+  if (!e) return null;
+  if (e.expires <= Date.now()) {
+    cache.delete(url);
+    return null;
+  }
+  return e.text;
+}
+
+function remember(url: string, text: string, ttl: number) {
+  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
+  cache.set(url, { text, expires: Date.now() + ttl * 1000 });
+}
+
+/** For tests. */
+export function clearUpstreamCache(): void {
+  cache.clear();
 }
 
 export async function fetchJson<T>(url: string, opts: FetchJsonOptions): Promise<T> {
   const method = (opts.init?.method ?? 'GET').toUpperCase();
-  const cache = method === 'GET' && opts.ttl ? colo() : null;
-  const key = cache ? new Request(url, { method: 'GET' }) : null;
-  if (cache && key) {
-    const hit = await cache.match(key);
-    if (hit) return (await hit.json()) as T;
+  const cacheable = method === 'GET' && !!opts.ttl;
+  if (cacheable) {
+    const hit = cached(url);
+    if (hit !== null) return JSON.parse(hit) as T;
   }
 
   let res: Response;
@@ -62,13 +80,6 @@ export async function fetchJson<T>(url: string, opts: FetchJsonOptions): Promise
   } catch {
     throw new UpstreamError(opts.source, 502, `${opts.source} answered something that isn't JSON`);
   }
-  if (cache && key) {
-    await cache.put(
-      key,
-      new Response(text, {
-        headers: { 'content-type': 'application/json', 'cache-control': `max-age=${opts.ttl}` },
-      }),
-    );
-  }
+  if (cacheable) remember(url, text, opts.ttl!);
   return data;
 }

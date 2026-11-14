@@ -80,7 +80,7 @@ export async function fromBadge(req: Request, body: string, env: Env): Promise<B
     h('x-badge-time'),
     id,
   ].join('\n');
-  let sig: Uint8Array;
+  let sig: Uint8Array<ArrayBuffer>;
   try {
     sig = Uint8Array.from(atob(h('x-badge-signature')), (c) => c.charCodeAt(0));
   } catch {

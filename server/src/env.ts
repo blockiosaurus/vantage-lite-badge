@@ -1,5 +1,9 @@
-import type { DailyLimit } from './daily-limit';
-import type { SwapIntent } from './swap-intent';
+import type { IntentInput, SwapLogic } from './swap';
+
+/** One swap intent's operations (see swap.ts). */
+export type SwapHandle = Pick<SwapLogic, 'label' | 'buildFor' | 'status'> & {
+  create(input: IntentInput): Promise<void>;
+};
 
 export interface Env {
   PUBLIC_ORIGIN: string;
@@ -11,8 +15,10 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   /** Origin of the badge server whose key signs badge requests. */
   BADGE_SERVER_ORIGIN?: string;
-  SWAPS: DurableObjectNamespace<SwapIntent>;
-  LIMITS: DurableObjectNamespace<DailyLimit>;
+  /** Swap intents by id. */
+  SWAPS: { getByName(id: string): SwapHandle };
+  /** Daily counters by name: `hit(max)` counts one and says whether it was allowed. */
+  LIMITS: { getByName(name: string): { hit(max: number): Promise<boolean> } };
 }
 
 export const SOL_MINT = 'So11111111111111111111111111111111111111112';

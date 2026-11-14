@@ -3,7 +3,10 @@
 
 import { vi } from 'vitest';
 import type { Env } from '../src/env';
-import { SwapLogic, type Store } from '../src/swap';
+import { MemoryKV } from '../src/kv';
+import { namespaces } from '../src/state';
+import type { Store } from '../src/swap';
+import { clearUpstreamCache } from '../src/upstream';
 
 export const BONK = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263';
 export const WIF = 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm';
@@ -59,6 +62,7 @@ export interface World {
 }
 
 export function installWorld(over: Partial<World> = {}): World {
+  clearUpstreamCache();
   const world: World = {
     calls: [],
     swapBodies: [],
@@ -167,8 +171,6 @@ export function memoryStore(): Store {
 }
 
 export function testEnv(over: Partial<Env> = {}): Env {
-  const intents = new Map<string, SwapLogic>();
-  const counters = new Map<string, number>();
   const env = {
     PUBLIC_ORIGIN: 'https://lite.test',
     BADGE_APP_ID: 'vantage-lite',
@@ -176,31 +178,10 @@ export function testEnv(over: Partial<Env> = {}): Env {
     JUPITER_ORIGIN: 'https://jup.test',
     SOLANA_RPC_URL: 'https://rpc.test',
     BADGE_SERVER_ORIGIN: 'https://badge.test',
-    SWAPS: {
-      getByName(name: string) {
-        let logic = intents.get(name);
-        if (!logic) {
-          logic = new SwapLogic(memoryStore(), env);
-          intents.set(name, logic);
-        }
-        return logic;
-      },
-    },
-    LIMITS: {
-      getByName(name: string) {
-        return {
-          async hit(max: number) {
-            const n = (counters.get(name) ?? 0) + 1;
-            if (n > max) return false;
-            counters.set(name, n);
-            return true;
-          },
-        };
-      },
-    },
     ...over,
-  } as unknown as Env;
-  return env;
+  } as Env;
+  // The same storage path production uses, over the in-memory KV.
+  return Object.assign(env, namespaces(new MemoryKV(), () => env), over.SWAPS ? { SWAPS: over.SWAPS } : {});
 }
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';

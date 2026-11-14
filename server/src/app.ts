@@ -1,5 +1,5 @@
-// The router. Kept apart from index.ts (which also exports the Durable Object
-// classes, and so imports `cloudflare:workers`) so tests can drive it in Node.
+// The router: a plain fetch-style handler (Request in, Response out). main.ts
+// serves it over node:http; the tests call it directly.
 //
 //   badge (signed, ~3.5 KB replies)          wallet (Solana Pay)
 //   GET  /v1/pulse                           GET  /pay/:id   label + icon
