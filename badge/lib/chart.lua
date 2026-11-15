@@ -8,7 +8,7 @@ function C.draw(x, y, w, h, pts, up)
   local c = ui.canvas(x, y, w, h, {scale = 1})
   c:clear()
   -- a faint midline so a flat chart still reads as a chart
-  for gx = 0, w - 1, 6 do c:pixel(gx, h // 2, "border") end
+  for gx = 0, w - 1, 6 do c:pixel(gx, h // 2, theme.BORDER) end
   local n = #pts
   if n < 2 then return c end
   local line = up and theme.UP or theme.DOWN

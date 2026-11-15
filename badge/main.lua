@@ -1,6 +1,6 @@
--- Vantage Lite: an unofficial, third-party take on the Vantage trading
--- terminal for the Solana OS badge. It uses only public APIs, nothing from
--- Vantage's own backend.
+-- Vantage Lite by Metaplex: the Vantage trading terminal, cut down for the
+-- Solana OS badge. It runs on public APIs (Jupiter, GeckoTerminal,
+-- alternative.me, Solana RPC) through its own server, not Vantage's backend.
 --
 -- Discover trending tokens, read a token's chart, stats and safety audit,
 -- watch tokens on the LEDs with price alerts, ask an assistant, and buy or
@@ -16,7 +16,7 @@ local ticker = require("lib.ticker")
 local leds = require("lib.leds")
 
 store.load()
-nav.push(require("screens.home"), {})
+nav.push(require("screens.splash"), {})
 ticker.start()
 
 function on_key(k, rep)

@@ -2,6 +2,7 @@
 local nav = require("lib.nav")
 local store = require("lib.store")
 local text = require("lib.text")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local TR = {}
@@ -16,7 +17,7 @@ end
 function TR.enter(p)
   local t = p.info
   theme.chrome((p.side == "buy" and "Buy " or "Sell ") .. t.s, t.p)
-  ui.label(8, 30, settings_line(), {size = 12, color = "dim", w = ui.W - 16})
+  theme.label(8, 30, settings_line(), {size = 12, color = theme.MUTED_FG, w = ui.W - 16})
   local items, start = {}, 1
   if p.side == "buy" then
     for i, l in ipairs(BUYS) do
@@ -28,7 +29,7 @@ function TR.enter(p)
       items[i] = {title = pc .. "%", sub = pc == 100 and ("All the " .. t.s .. " in the wallet you scan with") or ("Of the " .. t.s .. " in the wallet you scan with")}
     end
   end
-  local list = ui.list(0, 46, ui.W, ui.H - 62, items, {on_select = function(i)
+  local list = listui.new(0, 46, ui.W, ui.H - 62, items, {on_select = function(i)
     nav.replace(require("screens.swap"), {
       side = p.side,
       info = t,
@@ -37,7 +38,7 @@ function TR.enter(p)
     })
   end})
   list:select(start)
-  ui.hint("SELECT continue   CANCEL back")
+  theme.hint("SELECT continue   CANCEL back")
 end
 
 return TR

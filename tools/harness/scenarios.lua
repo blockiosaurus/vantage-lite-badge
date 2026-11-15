@@ -25,9 +25,41 @@ return {
     local b = H.boot()
     expect(H.rows() == "Pulse | Discover | Search | Watchlist | Portfolio | Ask Vantage | Settings", H.rows())
     H.flush()
-    shows("SOL $187.42 -2.50%   F&G 64 Greed")
-    expect(b.hint == "SELECT open   CANCEL exit")
+    shows("SOL $187.42") shows("-2.50%") shows("F&G 64 Greed") shows("by Metaplex")
+    shows("SELECT open   CANCEL exit")
     expect(count(b.timers) == 1, "only the ticker runs in the background")
+  end},
+
+  {name = "Launch screen: Metaplex, then the menu on its own or on a key", run = function()
+    local b = H.boot(nil, nil, {splash = true})
+    local imgs = {}
+    for _, o in ipairs(H.find("image")) do imgs[#imgs + 1] = o.src end
+    expect(table.concat(imgs, ",") == "art/metaplex.png,art/vantage-mark.png", table.concat(imgs, ","))
+    shows("Vantage Lite")
+    H.advance(800)
+    local blue = 0
+    for _, c in ipairs(b.leds) do if c[3] == 255 then blue = blue + 1 end end
+    expect(blue == 1, "one blue LED sweeping")
+    H.advance(900)
+    expect(H.top() == H.screen("home"), "on to the menu after 1.6 s")
+    H.boot(nil, nil, {splash = true})
+    H.press("back")
+    expect(H.top() == H.screen("home"), "any key skips it")
+  end},
+
+  {name = "Every screen carries the Metaplex mark", run = function()
+    H.boot()
+    H.flush()
+    local function marked()
+      for _, o in ipairs(H.find("image")) do if o.src == "art/metaplex-mark.png" then return true end end
+      return false
+    end
+    expect(marked(), "menu")
+    for _, item in ipairs({"Pulse", "Discover", "Watchlist", "Portfolio", "Ask Vantage", "Settings"}) do
+      H.choose(item)
+      expect(marked(), item)
+      H.press("back")
+    end
   end},
 
   {name = "CANCEL on the menu exits", run = function()
@@ -81,7 +113,7 @@ return {
     shows("Bonk")
     shows("$0.00002314")
     shows("+12.3%")
-    shows("VERIFIED")
+    shows("Verified") shows("Trade")
     expect(#H.find("canvas") == 1, "chart drawn")
     shows("L $0.00002   H $0.00002095")
     shows("Chart  1/3")
@@ -137,7 +169,7 @@ return {
     expect(b.requests[#b.requests] == "POST /v1/swap", b.requests[#b.requests])
     local qr = H.find("qr")[1]
     expect(qr and qr.value == H.fixtures.swap.url, "QR holds the Solana Pay link")
-    shows("BUY Bonk") shows("0.25 SOL") shows("~4.32M Bonk") shows("SCAN")
+    shows("BUY") shows("Bonk") shows("0.25 SOL") shows("~4.32M Bonk") shows("SCAN")
     H.advance(3000)
     shows("SCAN")
     H.advance(3000)
@@ -172,7 +204,7 @@ return {
     H.choose("Sell Bonk")
     expect(H.rows() == "25% | 50% | 100%", H.rows())
     H.choose("50%")
-    shows("SELL Bonk") shows("50% of it")
+    shows("SELL") shows("Bonk") shows("50% of it")
   end},
 
   {name = "A failed quote shows why and flashes red", run = function()
@@ -285,7 +317,7 @@ return {
     H.press("select") H.press("select")
     H.choose("Buy Bonk")
     shows("Slippage 3%   Priority fast")
-    expect(H.find("list")[1].sel == 3, "default buy preselected")
+    expect(H.selected() == 3, "default buy preselected")
   end},
 
   {name = "Offline: every screen says so instead of breaking", run = function()
@@ -322,6 +354,6 @@ return {
     -- leave before the list arrives
     H.press("back")
     expect(H.top() == H.screen("home"))
-    expect(not H.labels():find("Trending"), "discover's answer drew on the menu")
+    expect(not H.labels():find("Trending 1h"), "discover's answer drew on the menu")
   end},
 }

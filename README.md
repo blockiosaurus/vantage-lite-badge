@@ -1,16 +1,18 @@
 # Vantage Lite
 
-An unofficial, third-party badge app inspired by [Vantage](https://vantage.metaplex.com), the
-Metaplex trading terminal, for the
+Metaplex's [Vantage](https://vantage.metaplex.com) trading terminal, cut down for the
 [Solana Breakpoint 2026 badge](https://github.com/solana-foundation/solana-os): an ESP32-C5
 with a 320×218 screen, six buttons and eight RGB LEDs.
 
-> **Not affiliated with Vantage or Metaplex.** Vantage Lite uses only public APIs (Jupiter,
-> GeckoTerminal, alternative.me, Solana RPC). It depends on nothing from Vantage's backend and
-> keeps working whatever Vantage changes. The one link to Vantage is "Open in Vantage", a QR
-> code for the token's public page.
+It carries the Metaplex mark on every screen and follows Vantage's design language
+(`apps/terminal/design.md` in genesis-app; see [Design](#design)).
 
-| On the badge | Inspired by Vantage's |
+> **Runs on its own.** Vantage Lite uses only public APIs (Jupiter, GeckoTerminal,
+> alternative.me, Solana RPC) through its own server. It depends on nothing from Vantage's
+> backend and keeps working whatever Vantage changes. The one link to Vantage is "Open in
+> Vantage", a QR code for the token's public page.
+
+| On the badge | From Vantage's |
 |---|---|
 | **Pulse**: SOL price, Fear & Greed, SOL's day chart, the hour's top mover. The LEDs show the mood as a red-to-green bar. | Market mood block |
 | **Discover**: Trending 1h, Top volume, New pairs, Organic. LEFT/RIGHT switches tabs. | Discovery boards |
@@ -28,10 +30,32 @@ with a 320×218 screen, six buttons and eight RGB LEDs.
 ![Vantage Lite's screens](docs/screens/contact-sheet.png)
 
 These are renders, not photos of a badge. Every object, position, text and colour comes
-from the app's own draw calls, run on the badge's Lua 5.5 in the harness. The drawing follows
-Solana OS's widgets and dark theme. The fonts differ: the badge uses ABC Diatype, which is
+from the app's own draw calls, run on the badge's Lua 5.5 in the harness; the status bar along
+the top is Solana OS's own, approximated. The fonts differ: the badge uses ABC Diatype, which is
 licensed to the firmware only, so the renders use Inter. Token data is sample data with real
 names and made-up numbers. One screen per file is in [`docs/screens/`](docs/screens/).
+
+## Design
+
+Vantage's dark theme, mapped onto what a badge can draw (`badge/lib/theme.lua`):
+
+- **Surfaces:** the stepped ladder from genesis-app's dark tokens, never pure black:
+  floor `#050609`, muted wells `#0D0E11` (header, hint bar), cards `#131519`, secondary chips
+  `#1D2024`. Text is `#F9FAFB`, secondary text `#A0A5AC`.
+- **Metaplex Blue `#0052FF`, used scarcely:** the focused row's ring, the primary action
+  (Trade, BUY/SELL), the mood meter, the launch screen's LED sweep.
+- **Market colour as text only:** `#05B169` up, `#FA4242` down, on changes in lists, stats,
+  charts and risk flags; never as a fill behind text.
+- **Pills and rounded cards:** tabs, range chips and actions are pills; the focused row is a
+  rounded card.
+- **Brand:** a launch screen with the Metaplex wordmark and the Vantage mark, and the Metaplex
+  mark in every screen's header (`badge/art/`, from genesis-app's logo SVGs).
+
+Two of Solana OS's widgets are replaced to get there: `ui.list` (its green selection bar, purple
+scrollbar and grey right column can't be restyled) by `badge/lib/list.lua`, and `ui.hint` by a
+muted well. The colours are fixed values, not the badge's theme names, so the app stays dark
+under the badge's Light theme. The status bar, toasts and keyboard belong to Solana OS and keep
+its look.
 
 ## How it fits together
 
@@ -170,9 +194,6 @@ cd server && npm run dev
 
 ## Notes
 
-- **Names.** "Vantage" is a Metaplex product name. If you publish this outside Metaplex, check
-  that the name and the blue are fine to use, or rename the app (`badge/app.json`,
-  `badge/lib/theme.lua`).
 - The badge holds no secrets: `main.lua` is readable by anyone who installs the app, so every
   key lives on the server.
 

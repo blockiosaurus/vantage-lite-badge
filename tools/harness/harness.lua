@@ -190,7 +190,8 @@ function ui.label(x, y, text, opts)
 end
 function ui.rect(x, y, w, h, opts)
   colour(opts and opts.color)
-  local r = object("rect", {x = x, y = y, w = w, h = h, colour = opts and opts.color, radius = opts and opts.radius})
+  local r = object("rect", {x = x, y = y, w = w, h = h, colour = opts and opts.color, radius = opts and opts.radius, border = opts and opts.border})
+  if opts and opts.border ~= nil then colour(opts.border) end
   function r:size(nw, nh) self.w, self.h = nw, nh end
   return add(r)
 end
@@ -242,6 +243,16 @@ function ui.canvas(x, y, w, h, opts)
   function c:image() end
   function c:get() return nil end
   return add(c)
+end
+function ui.image(x, y, src, opts)
+  if type(src) ~= "string" then fail("ui.image: only bundled paths are stubbed") end
+  local data = read_file(APP_DIR .. "/" .. src)
+  if not data then fail("ui.image: no bundled file " .. src) end
+  if data:sub(2, 4) ~= "PNG" then fail("ui.image: " .. src .. " is not a PNG") end
+  local w = (data:byte(17) << 24) | (data:byte(18) << 16) | (data:byte(19) << 8) | data:byte(20)
+  local h = (data:byte(21) << 24) | (data:byte(22) << 16) | (data:byte(23) << 8) | data:byte(24)
+  if w > 1024 or h > 1024 then fail("ui.image: over 1024 px a side") end
+  return add(object("image", {x = x, y = y, w = w, h = h, src = src, scale = opts and opts.scale or 1}))
 end
 function ui.hint(s) check_text("ui.hint", s) B.hint = s end
 function ui.toast(s) check_text("ui.toast", s) B.toasts[#B.toasts + 1] = s end
@@ -380,13 +391,15 @@ end
 local H = {}
 local ENV
 
-function H.boot(saved, linked)
+function H.boot(saved, linked, opts)
   B = new_badge(saved)
   B.linked_wallet = linked
   ENV = sandbox()
   local src = assert(read_file(APP_DIR .. "/main.lua"))
   if #src > 65536 then error("main.lua over 64 KB") end
   assert(load(src, "@main.lua", "t", ENV))()
+  -- past the launch screen, leaving answers pending as a fresh boot would
+  if not (opts and opts.splash) then ENV.on_key("select", false) end
   return B
 end
 
@@ -420,7 +433,16 @@ function H.advance(ms)
   H.flush()
 end
 
+-- The app's own list (badge/lib/list.lua), else a Solana OS ui.list.
+local function app_list()
+  local ok, lib = pcall(ENV.require, "lib.list")
+  local l = ok and type(lib) == "table" and lib.active and lib.active()
+  if l and l.shown then return l end
+end
+
 local function focused_list()
+  local l = app_list()
+  if l then return {kind = "app", rows = l.rows, sel = l.sel, app = l} end
   for i = #B.objs, 1, -1 do
     local o = B.objs[i]
     if o.kind == "list" and not o.removed and o.visible then return o end
@@ -430,6 +452,7 @@ end
 function H.press(k)
   if #B.inputs > 0 then error("a dialog has the keys: " .. B.inputs[1].text, 2) end
   local l = focused_list()
+  if l and l.app then l = nil end -- the app's list takes its keys through on_key, like any key
   if l and (k == "up" or k == "down") and #l.rows > 0 then
     l.sel = math.max(1, math.min(#l.rows, l.sel + (k == "down" and 1 or -1)))
     return
@@ -457,11 +480,17 @@ function H.choose(title)
   for i, r in ipairs(l.rows) do
     local t = type(r) == "table" and r.title or r
     if t:find(title, 1, true) then
-      l.sel = i
+      if l.app then l.app:select(i) else l.sel = i end
       return H.press("select")
     end
   end
   error("no row '" .. title .. "' in " .. H.rows(), 2)
+end
+
+-- The selected row of the focused list (1-based), or nil.
+function H.selected()
+  local l = focused_list()
+  return l and l.sel
 end
 
 function H.labels()
@@ -509,7 +538,9 @@ function H.snapshot(name, opts)
       if o.kind == "label" then
         t.text, t.colour, t.size, t.w, t.align = o.value, o.colour, o.size, o.w, o.align
       elseif o.kind == "rect" then
-        t.w, t.h, t.colour, t.radius = o.w, o.h, o.colour, o.radius
+        t.w, t.h, t.colour, t.radius, t.border = o.w, o.h, o.colour, o.radius, o.border
+      elseif o.kind == "image" then
+        t.w, t.h, t.src, t.scale = o.w, o.h, o.src, o.scale
       elseif o.kind == "bar" then
         t.w, t.h, t.value = o.w, o.h, o.value
       elseif o.kind == "list" then
@@ -537,6 +568,8 @@ end
 -- True while a list with no rows is showing: Solana OS would draw its
 -- "Nothing here yet" over the screen.
 function H.empty_list_showing()
+  local l = app_list()
+  if l and #l.rows == 0 then return true end
   for _, o in ipairs(B.objs) do
     if o.kind == "list" and not o.removed and o.visible and #o.rows == 0 then return true end
   end

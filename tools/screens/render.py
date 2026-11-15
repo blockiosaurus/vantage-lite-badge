@@ -94,9 +94,9 @@ class Screen:
     def rect(self, x, y, w, h, colour, radius=0, outline=None):
         box = [x * S, y * S, (x + w) * S - 1, (y + h) * S - 1]
         if radius:
-            self.d.rounded_rectangle(box, radius=radius * S, fill=colour, outline=outline)
+            self.d.rounded_rectangle(box, radius=radius * S, fill=colour, outline=outline, width=S if outline else 0)
         else:
-            self.d.rectangle(box, fill=colour, outline=outline)
+            self.d.rectangle(box, fill=colour, outline=outline, width=S if outline else 0)
 
     def text(self, x, y, s, size, colour, anchor="la"):
         self.d.text((x * S, y * S), s, font=font(size), fill=colour, anchor=anchor)
@@ -211,6 +211,19 @@ def draw_qr(sc, ox, oy, o):
     sc.img.paste(img, ((ox + o["x"]) * S, (oy + o["y"]) * S))
 
 
+BADGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "badge")
+
+
+def draw_image(sc, ox, oy, o):
+    """A bundled PNG, as Solana OS draws one: pixels under half opaque are
+    see-through, the rest solid (no blending), scaled by whole pixels."""
+    img = Image.open(os.path.join(BADGE_DIR, o["src"])).convert("RGBA")
+    mask = img.getchannel("A").point(lambda v: 255 if v >= 128 else 0)
+    k = (o.get("scale") or 1) * S
+    big = img.resize((img.width * k, img.height * k), Image.NEAREST)
+    sc.img.paste(big.convert("RGB"), ((ox + o["x"]) * S, (oy + o["y"]) * S), mask.resize(big.size, Image.NEAREST))
+
+
 def draw_hint(sc, text):
     y = STATUS_H + ROOT_H - HINT_H
     sc.rect(0, y, W, HINT_H, rgb("panel"))
@@ -272,7 +285,8 @@ def render_screen(shot):
         if k == "label":
             draw_label(sc, ox, oy, o)
         elif k == "rect":
-            sc.rect(ox + o["x"], oy + o["y"], o["w"], o["h"], rgb(o.get("colour") or "panel"), radius=o.get("radius") or 0)
+            sc.rect(ox + o["x"], oy + o["y"], o["w"], o["h"], rgb(o.get("colour") or "panel"), radius=o.get("radius") or 0,
+                    outline=rgb(o["border"]) if o.get("border") is not None else None)
         elif k == "bar":
             draw_bar(sc, ox, oy, o)
         elif k == "list":
@@ -281,6 +295,8 @@ def render_screen(shot):
             draw_canvas(sc, ox, oy, o)
         elif k == "qr":
             draw_qr(sc, ox, oy, o)
+        elif k == "image":
+            draw_image(sc, ox, oy, o)
     if shot.get("hint"):
         draw_hint(sc, shot["hint"])
     if shot.get("toast"):

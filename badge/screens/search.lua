@@ -2,6 +2,7 @@
 local api = require("lib.api")
 local nav = require("lib.nav")
 local rows = require("lib.rows")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local S = {}
@@ -32,13 +33,13 @@ end
 function S.enter(p)
   found = {}
   note = theme.chrome("Search", "")
-  list = ui.list(0, 30, ui.W, ui.H - 46, {}, {on_select = function(i)
+  list = listui.new(0, 30, ui.W, ui.H - 46, {}, {on_select = function(i)
     local t = found[i]
     if t then nav.push(require("screens.token"), {m = t.m, s = t.s}) end
   end})
   status = theme.notice("", 96)
   list:show(false)
-  ui.hint("SELECT open   RIGHT new search   CANCEL back")
+  theme.hint("SELECT open   RIGHT new search   CANCEL back")
   if p.q then run(p.q) else ask() end
 end
 

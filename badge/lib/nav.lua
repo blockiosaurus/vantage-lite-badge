@@ -2,6 +2,8 @@
 -- key(k, rep) -> handled, tick(ms) and leave(). Moving between screens clears
 -- every UI object, cancels the timers the old screen started, and bumps a
 -- generation number so late http answers for an old screen are dropped.
+local list = require("lib.list")
+
 local N = {}
 
 local stack = {}
@@ -16,6 +18,7 @@ end
 local function show(entry)
   gen = gen + 1
   stop_timers()
+  list.reset()
   ui.clear()
   entry.screen.enter(entry.params or {})
 end
@@ -79,6 +82,9 @@ function N.guard(fn)
 end
 
 function N.key(k, rep)
+  -- The screen's list takes up/down/select first, as Solana OS does for ui.list.
+  local l = list.active()
+  if l and l:key(k, rep) then return true end
   local top = current()
   if top and top.screen.key and top.screen.key(k, rep) then return true end
   if k == "back" then return N.pop() end

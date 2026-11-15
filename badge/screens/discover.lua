@@ -2,6 +2,7 @@
 local api = require("lib.api")
 local nav = require("lib.nav")
 local rows = require("lib.rows")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local D = {}
@@ -13,12 +14,15 @@ local TABS = {
 }
 local tab = 1
 local cache = {}   -- [id] = {items =, at = sys.millis()}
-local tabs, underline, list, note, status
+local tabs, list, note, status
 local shown = {}
 
 local function draw_tabs()
-  for i, l in ipairs(tabs) do l:color(i == tab and theme.BLUE or "dim") end
-  underline:pos(8 + (tab - 1) * 78, 46)
+  for i, t in ipairs(tabs) do
+    local on = i == tab
+    t.rect:show(on)
+    t.label:color(on and theme.FG or theme.MUTED_FG)
+  end
 end
 
 local function fill(data)
@@ -51,15 +55,14 @@ function D.enter()
   note = theme.chrome("Discover", "")
   tabs = {}
   for i, t in ipairs(TABS) do
-    tabs[i] = ui.label(8 + (i - 1) * 78, 30, t.name, {size = 14, color = "dim", w = 70})
+    tabs[i] = theme.pill(8 + (i - 1) * 76, 31, 70, t.name)
   end
-  underline = ui.rect(8, 46, 40, 2, {color = theme.BLUE})
-  list = ui.list(0, 50, ui.W, ui.H - 66, {}, {on_select = function(i)
+  list = listui.new(0, 56, ui.W, ui.H - 72, {}, {on_select = function(i)
     local t = shown[i]
     if t then nav.push(require("screens.token"), {m = t.m, s = t.s}) end
   end})
   status = theme.notice("", 110)
-  ui.hint("<> tab   SELECT open   CANCEL back")
+  theme.hint("<> tab   SELECT open   CANCEL back")
   draw_tabs()
   load()
 end

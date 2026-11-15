@@ -2,6 +2,7 @@
 local nav = require("lib.nav")
 local store = require("lib.store")
 local text = require("lib.text")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local A = {}
@@ -19,7 +20,7 @@ function A.enter(p)
     {title = "Ask Vantage", sub = "What's going on with " .. t.s .. "?"},
     {title = "Open in Vantage", sub = "A QR code for your phone"},
   }
-  ui.list(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
+  listui.new(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
     if i == 1 then
       nav.replace(require("screens.trade"), {side = "buy", info = t})
     elseif i == 2 then
@@ -41,7 +42,7 @@ function A.enter(p)
       nav.replace(require("screens.qr"), {title = t.s, text = t.url, caption = "Open " .. t.s .. " in Vantage on your phone"})
     end
   end})
-  ui.hint("SELECT choose   CANCEL back")
+  theme.hint("SELECT choose   CANCEL back")
 end
 
 return A

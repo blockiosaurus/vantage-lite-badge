@@ -3,6 +3,7 @@
 local config = require("lib.config")
 local store = require("lib.store")
 local text = require("lib.text")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 local ticker = require("lib.ticker")
 
@@ -27,13 +28,13 @@ local function items()
     {title = "Priority fee", sub = "Capped at 0.0005 / 0.001 / 0.003 SOL", right = s.tier},
     {title = "LED ticker", sub = "Watchlist on the LEDs", right = s.ticker and "on" or "off"},
     {title = "Wallet", sub = store.wallet and "SELECT to forget" or "Set by your first swap", right = store.wallet and text.short(store.wallet) or "none"},
-    {title = "About", sub = "Unofficial. Not made by Vantage or Metaplex", right = "v" .. config.VERSION},
+    {title = "About", sub = "Vantage Lite by Metaplex", right = "v" .. config.VERSION},
   }
 end
 
 function ST.enter()
   theme.chrome("Settings", "")
-  list = ui.list(0, 30, ui.W, ui.H - 46, items(), {on_select = function(i)
+  list = listui.new(0, 30, ui.W, ui.H - 46, items(), {on_select = function(i)
     local s = store.settings
     if i == 1 then s.buy = next_of(BUYS, s.buy)
     elseif i == 2 then s.slip = next_of(SLIPS, s.slip)
@@ -49,7 +50,7 @@ function ST.enter()
     list:items(items())
     list:select(i)
   end})
-  ui.hint("SELECT change   CANCEL back")
+  theme.hint("SELECT change   CANCEL back")
 end
 
 return ST

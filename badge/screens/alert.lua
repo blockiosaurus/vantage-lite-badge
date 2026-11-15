@@ -3,6 +3,7 @@
 local nav = require("lib.nav")
 local store = require("lib.store")
 local text = require("lib.text")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local AL = {}
@@ -20,7 +21,7 @@ function AL.enter(p)
     }
   end
   items[#items + 1] = {title = "Clear alert", sub = store.alerts[t.m] and "Remove the one set" or "None set"}
-  ui.list(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
+  listui.new(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
     if i > #MOVES then
       store.set_alert(t.m, nil)
       ui.toast("Alert cleared")
@@ -37,7 +38,7 @@ function AL.enter(p)
     end
     nav.pop()
   end})
-  ui.hint("SELECT set   CANCEL back")
+  theme.hint("SELECT set   CANCEL back")
 end
 
 return AL

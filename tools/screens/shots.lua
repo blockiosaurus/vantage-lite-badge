@@ -103,6 +103,10 @@ local function boot(saved)
 end
 
 ------------------------------------------------------------------ the tour
+H.boot(nil, nil, {splash = true})
+H.advance(560)
+snap("00-launch", "Launch: Metaplex, then Vantage Lite, with a blue LED sweep")
+
 local b = boot()
 snap("01-home", "The menu, with a live market strip")
 

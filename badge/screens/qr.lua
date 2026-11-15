@@ -10,8 +10,8 @@ function Q.enter(p)
     return
   end
   ui.qr(8, 32, 168, p.text)
-  ui.label(186, 40, p.caption or "", {size = 14, w = ui.W - 194})
-  ui.hint("CANCEL back")
+  theme.label(186, 40, p.caption or "", {size = 14, w = ui.W - 194})
+  theme.hint("CANCEL back")
 end
 
 return Q

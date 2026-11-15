@@ -1,5 +1,6 @@
 -- Ask Vantage: canned questions a d-pad can pick, or type one.
 local nav = require("lib.nav")
+local listui = require("lib.list")
 local theme = require("lib.theme")
 
 local AK = {}
@@ -19,7 +20,7 @@ function AK.enter(p)
   local items = {}
   for i, q in ipairs(qs) do items[i] = {title = q} end
   items[#items + 1] = {title = "Type a question...", sub = "d-pad keyboard"}
-  ui.list(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
+  listui.new(0, 30, ui.W, ui.H - 46, items, {on_select = function(i)
     if qs[i] then
       nav.push(require("screens.answer"), {q = qs[i], m = p.m})
     else
@@ -28,7 +29,7 @@ function AK.enter(p)
       end)
     end
   end})
-  ui.hint("SELECT ask   CANCEL back")
+  theme.hint("SELECT ask   CANCEL back")
 end
 
 return AK

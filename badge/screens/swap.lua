@@ -69,14 +69,15 @@ function SW.enter(p)
   -- QR on the left (160 px), a 136 px column on the right. Each line has
   -- room for what it holds: the route may take two lines, status up to three.
   local x, cw = 176, ui.W - 184
-  w.side = ui.label(x, 32, (p.side == "buy" and "BUY " or "SELL ") .. t.s, {size = 20, color = theme.BLUE, w = cw})
-  w.amount = ui.label(x, 58, p.side == "buy" and (text.sol(p.lamports) .. " SOL") or (p.percent .. "% of it"), {size = 14, w = cw})
-  w.out = ui.label(x, 76, "", {size = 14, color = "dim", w = cw})
-  w.route = ui.label(x, 96, "", {size = 12, color = "dim", w = cw})
-  w.impact = ui.label(x, 126, "", {size = 12, color = "dim", w = cw})
-  w.state = ui.label(x, 146, "PREPARING", {size = 14, color = theme.BLUE, w = cw})
-  w.status = ui.label(x, 164, "Getting a quote...", {size = 12, w = cw})
-  ui.hint("CANCEL back")
+  theme.pill(x, 33, 52, p.side == "buy" and "BUY" or "SELL", {primary = true})
+  w.side = theme.label(x + 60, 31, theme.fit(t.s, cw - 60, 20), {size = 20})
+  w.amount = theme.label(x, 58, p.side == "buy" and (text.sol(p.lamports) .. " SOL") or (p.percent .. "% of it"), {size = 14, w = cw})
+  w.out = theme.label(x, 76, "", {size = 14, color = theme.MUTED_FG, w = cw})
+  w.route = theme.label(x, 96, "", {size = 12, color = theme.MUTED_FG, w = cw})
+  w.impact = theme.label(x, 126, "", {size = 12, color = theme.MUTED_FG, w = cw})
+  w.state = theme.label(x, 146, "PREPARING", {size = 14, color = theme.MUTED_FG, w = cw})
+  w.status = theme.label(x, 164, "Getting a quote...", {size = 12, w = cw})
+  theme.hint("CANCEL back")
   leds.busy()
 
   local s = store.settings
@@ -101,6 +102,7 @@ function SW.enter(p)
     w.route:text(d.route)
     if d.impact ~= "-" then w.impact:text("Impact " .. d.impact) end
     w.state:text("SCAN")
+    w.state:color(theme.FG)
     w.status:text("Scan in Phantom or Solflare")
     if ui.qr then
       w.qr = ui.qr(8, 34, 160, d.url)
