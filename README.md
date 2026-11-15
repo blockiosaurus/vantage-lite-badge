@@ -144,8 +144,10 @@ two replicas could step on each other's writes.
 
 "Get Vantage" on the badge gives the owner the real Vantage terminal. The badge asks this
 server for a link; the server knows which owner is asking from the badge server's signature
-and answers `https://vantage.metaplex.com/badge?t=<ticket>`, a ticket signed with this server's
-key. The owner scans it, signs in to Vantage, and Vantage grants that account access. Vantage
+and answers `https://vantage.metaplex.com/badge#t=<ticket>`, a ticket signed with this server's
+key. The ticket rides in the URL fragment, so it never reaches a server log, and Vantage
+keeps its analytics off while it is there. The owner scans it, signs in to Vantage, and
+Vantage grants that account access. Vantage
 holds only the public key and records each badge owner it has granted, so one badge unlocks
 one account (metaplex-global/genesis-app: `apps/terminal/app/api/badge-access/`,
 `apps/terminal/lib/badge-access/ticket.ts` documents the ticket).

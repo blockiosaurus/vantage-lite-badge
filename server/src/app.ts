@@ -154,7 +154,9 @@ async function badgeRoute(req: Request, env: Env, url: URL, route: string): Prom
       if (!who.user) return badgeError('Claim this badge first', 403);
       if (!(await allow(env, 'access', who.badge))) return badgeError('daily limit reached', 429);
       const { ticket, expiresAt } = await mintTicket(key, who.user);
-      return badgeJson({ url: `${env.VANTAGE_ACCESS_ORIGIN}/badge?t=${ticket}`, exp: expiresAt });
+      // In the fragment, never the query: a fragment reaches no server, so the
+      // ticket stays out of Vantage's request logs (it is a bearer token until claimed).
+      return badgeJson({ url: `${env.VANTAGE_ACCESS_ORIGIN}/badge#t=${ticket}`, exp: expiresAt });
     }
     if (route === 'ask') {
       if (!env.ANTHROPIC_API_KEY) return badgeError('Ask Vantage is off on this server', 404);

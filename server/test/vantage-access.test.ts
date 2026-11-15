@@ -57,7 +57,7 @@ describe('POST /v1/vantage-access', () => {
     const res = await handle(post('/v1/vantage-access', {}, { 'x-badge-id': 'B1' }), env);
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string; exp: number };
-    const ticket = body.url.match(/^https:\/\/vantage\.test\/badge\?t=([A-Za-z0-9_-]{114})$/)?.[1];
+    const ticket = body.url.match(/^https:\/\/vantage\.test\/badge#t=([A-Za-z0-9_-]{114})$/)?.[1];
     expect(ticket).toBeDefined();
     expect(body.url.length).toBeLessThanOrEqual(256); // fits a badge QR code
     expect((await vantageVerify(ticket!, Math.floor(Date.now() / 1000)))?.owner).toBe(
