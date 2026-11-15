@@ -24,6 +24,7 @@ It carries the Metaplex mark on every screen and follows Vantage's design langua
 | **Portfolio**: what a wallet holds, by value. Uses the wallet you last swapped from, or the Solana address you linked at the badge site's `/profile` | Portfolio |
 | **Ask Vantage**: canned or typed questions, answered by Claude from a live market and token snapshot (optional, needs your own Anthropic key) | Assistant |
 | **Open in Vantage**: a QR code for the token's public page on vantage.metaplex.com | n/a |
+| **Get Vantage**: a QR code that unlocks the full Vantage terminal for the badge owner's account, one account per badge (see [Vantage access for badge owners](#vantage-access-for-badge-owners)) | The waitlist, skipped |
 
 ## Screens
 
@@ -127,6 +128,7 @@ The server is plain Node (`server/`, `npm start`) with Redis for its state.
 | `SOLANA_RPC_URL` | A private mainnet RPC. The public default is rate-limited; use your own for anything beyond a demo. |
 | `JUPITER_API_KEY` | With `JUPITER_ORIGIN=https://api.jup.ag`, Jupiter's keyed tier. The default is the free, rate-limited `lite-api.jup.ag`. |
 | `PUBLIC_ORIGIN` | Only for a custom domain (see step 3). |
+| `VANTAGE_ACCESS_SIGNING_KEY` | Turns on Get Vantage (see [Vantage access for badge owners](#vantage-access-for-badge-owners)). |
 
 6. Deploy, then check it's up. It should print `ok`; the `/v1/...` routes answer 401 to
    anything that isn't a badge.
@@ -137,6 +139,33 @@ curl https://<name>.up.railway.app/healthz
 
 Keep it at **one replica**: each swap's calls are queued in the process (`src/state.ts`), so
 two replicas could step on each other's writes.
+
+### Vantage access for badge owners
+
+"Get Vantage" on the badge gives the owner the real Vantage terminal. The badge asks this
+server for a link; the server knows which owner is asking from the badge server's signature
+and answers `https://vantage.metaplex.com/badge?t=<ticket>`, a ticket signed with this server's
+key. The owner scans it, signs in to Vantage, and Vantage grants that account access. Vantage
+holds only the public key and records each badge owner it has granted, so one badge unlocks
+one account (metaplex-global/genesis-app: `apps/terminal/app/api/badge-access/`,
+`apps/terminal/lib/badge-access/ticket.ts` documents the ticket).
+
+To turn it on:
+
+1. Make the key pair:
+
+   ```bash
+   cd server && npm run access:keygen
+   ```
+
+2. In Railway, add `VANTAGE_ACCESS_SIGNING_KEY` from that output (secret).
+3. In the Vantage terminal's Vercel project, add `BADGE_ACCESS_PUBLIC_KEY` from that output
+   (public), and deploy the genesis-app change that adds `/badge`.
+4. In Vantage's `/admin/flags`, set `terminal-badge-access` to **enabled**. It is the kill
+   switch: off, `/badge` behaves like the home page and nothing is granted.
+
+Without the signing key the badge's Get Vantage screen says it is off on this server.
+`VANTAGE_ACCESS_ORIGIN` points the links somewhere other than vantage.metaplex.com (a preview).
 
 ### 2. Point the app at it
 
@@ -156,7 +185,7 @@ permissions.
 ## Develop
 
 ```bash
-cd server && npm test            # 40 tests: routes, swap lifecycle, badge signatures, the Node server, formatting
+cd server && npm test            # 45 tests: routes, swap lifecycle, badge signatures, Vantage access tickets, the Node server, formatting
 ```
 
 ```bash
@@ -164,7 +193,7 @@ cd server && npm run typecheck
 ```
 
 ```bash
-tools/harness/run.sh             # 20 scenarios: every screen, key by key, on the badge's Lua 5.5
+tools/harness/run.sh             # 24 scenarios: every screen, key by key, on the badge's Lua 5.5
 ```
 
 `run.sh` clones solana-os into `.cache/` the first time (or set `SOLANA_OS=` to a checkout) and

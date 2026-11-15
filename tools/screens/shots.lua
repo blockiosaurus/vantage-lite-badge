@@ -110,6 +110,11 @@ snap("00-launch", "Launch: Metaplex, then Vantage Lite, with a blue LED sweep")
 local b = boot()
 snap("01-home", "The menu, with a live market strip")
 
+H.choose("Get Vantage")
+H.advance(1000)
+snap("01b-get-vantage", "Get Vantage: scan, sign in, and that account gets the full terminal")
+H.press("back")
+
 H.choose("Pulse")
 snap("02-pulse", "Pulse: SOL, Fear & Greed, SOL's day; the LEDs show the mood")
 H.press("back")

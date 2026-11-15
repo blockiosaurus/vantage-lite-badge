@@ -9,7 +9,8 @@
     "start": "tsx src/main.ts",
     "dev": "REQUIRE_BADGE_SIGNATURE=false PUBLIC_ORIGIN=https://localhost tsx watch src/main.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "access:keygen": "tsx scripts/access-keygen.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

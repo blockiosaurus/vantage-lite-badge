@@ -25,6 +25,8 @@ export function loadEnv(vars: NodeJS.ProcessEnv, kv: KV): Env {
     JUPITER_API_KEY: vars.JUPITER_API_KEY || undefined,
     SOLANA_RPC_URL: vars.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com',
     ANTHROPIC_API_KEY: vars.ANTHROPIC_API_KEY || undefined,
+    VANTAGE_ACCESS_SIGNING_KEY: vars.VANTAGE_ACCESS_SIGNING_KEY || undefined,
+    VANTAGE_ACCESS_ORIGIN: vars.VANTAGE_ACCESS_ORIGIN ?? 'https://vantage.metaplex.com',
     BADGE_SERVER_ORIGIN: vars.BADGE_SERVER_ORIGIN || undefined,
   } as Env;
   Object.assign(env, namespaces(kv, () => env));
@@ -87,6 +89,9 @@ async function main() {
   serve(env, port);
   console.log(`[vantage-lite] listening on :${port} as ${env.PUBLIC_ORIGIN}`);
   if (!env.ANTHROPIC_API_KEY) console.log('[vantage-lite] ANTHROPIC_API_KEY not set: Ask Vantage is off');
+  if (!env.VANTAGE_ACCESS_SIGNING_KEY) {
+    console.log('[vantage-lite] VANTAGE_ACCESS_SIGNING_KEY not set: Get Vantage is off');
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

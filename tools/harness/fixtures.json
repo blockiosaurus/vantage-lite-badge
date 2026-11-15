@@ -490,6 +490,10 @@
   "ask": {
     "a": "Bonk is up 12.3% on the day with $118M of volume, and its liquidity is deep at $12.4M. The audit is clean: mint and freeze authority are revoked and the top 10 wallets hold 18%. Buys outnumber sells 41K to 39.5K, so the move has broad participation rather than one whale. Memecoins swing hard, so size positions for a fast reversal."
   },
+  "vantage-access": {
+    "url": "https://vantage.test/badge?t=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "exp": 1790000600
+  },
   "swap-status": [
     {
       "st": "waiting"

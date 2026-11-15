@@ -307,6 +307,7 @@ local function route(method, url, body)
     B.swap_poll = math.min(B.swap_poll + 1, #fixtures["swap-status"])
     return {status = 200, data = fixtures["swap-status"][B.swap_poll]}
   elseif p == "/v1/ask" then key = "ask"
+  elseif p == "/v1/vantage-access" then key = "vantage-access"
   end
   if not key or fixtures[key] == nil then return {status = 404, data = {error = "not found"}} end
   return {status = 200, data = fixtures[key]}

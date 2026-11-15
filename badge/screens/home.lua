@@ -10,6 +10,7 @@ local strip, list
 
 local function items()
   return {
+    {title = "Get Vantage", sub = "Unlock the full terminal on your phone"},
     {title = "Pulse", sub = "SOL, fear & greed, top mover"},
     {title = "Discover", sub = "Trending, volume, new, organic"},
     {title = "Search", sub = "Find a token by name or ticker"},
@@ -20,7 +21,7 @@ local function items()
   }
 end
 
-local ROUTES = {"pulse", "discover", "search", "watchlist", "portfolio", "ask", "settings"}
+local ROUTES = {"vantage", "pulse", "discover", "search", "watchlist", "portfolio", "ask", "settings"}
 
 function H.enter()
   theme.chrome("Vantage Lite", "by Metaplex")

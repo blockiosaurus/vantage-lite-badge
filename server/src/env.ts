@@ -13,6 +13,10 @@ export interface Env {
   JUPITER_API_KEY?: string;
   SOLANA_RPC_URL: string;
   ANTHROPIC_API_KEY?: string;
+  /** Ed25519 private key (PKCS#8, base64) that signs Vantage access tickets. */
+  VANTAGE_ACCESS_SIGNING_KEY?: string;
+  /** Where tickets are redeemed: Vantage's origin (its /badge page). */
+  VANTAGE_ACCESS_ORIGIN: string;
   /** Origin of the badge server whose key signs badge requests. */
   BADGE_SERVER_ORIGIN?: string;
   /** Swap intents by id. */

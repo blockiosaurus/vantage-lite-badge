@@ -32,7 +32,9 @@ describe.runIf(out)('export fixtures for the badge harness', () => {
       ],
       usage: { input_tokens: 10, output_tokens: 10 },
     });
-    const env = testEnv({ ANTHROPIC_API_KEY: 'sk-test' });
+    const pair = (await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify'])) as CryptoKeyPair;
+    const signing = Buffer.from((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer).toString('base64');
+    const env = testEnv({ ANTHROPIC_API_KEY: 'sk-test', VANTAGE_ACCESS_SIGNING_KEY: signing });
     const json = async (req: Request) => {
       const res = await handle(req, env);
       expect(res.status).toBe(200);
@@ -51,12 +53,17 @@ describe.runIf(out)('export fixtures for the badge harness', () => {
       portfolio: await json(get(`/v1/portfolio/${WALLET}`)),
       swap: await json(post('/v1/swap', { side: 'buy', mint: BONK, lamports: '100000000' })),
       ask: await json(post('/v1/ask', { q: 'Is Bonk safe to trade?', mint: BONK })),
+      'vantage-access': await json(post('/v1/vantage-access', {})),
       'swap-status': [{ st: 'waiting' }, { st: 'signing', w: WALLET }, { st: 'done', w: WALLET, sig: '5UfgJ5vVZxUxefDGqzqkVLHzHxVTyYH9StYyHKgvHYmXJgqJKxEqy7k4', ok: true }],
     };
     // The intent id is random: pin it so the file only changes when a shape does.
     const swap = fixtures.swap as { id: string; url: string };
     swap.url = swap.url.replace(swap.id, 'FixtureSwap1');
     swap.id = 'FixtureSwap1';
+    // The ticket is signed with a fresh key each run: pin a stand-in of the same length.
+    const access = fixtures['vantage-access'] as { url: string; exp: number };
+    access.url = access.url.replace(/t=[A-Za-z0-9_-]+$/, `t=${'A'.repeat(114)}`);
+    access.exp = 1_790_000_600;
     writeFileSync(out!, `${JSON.stringify(fixtures, null, 2)}\n`);
   });
 });

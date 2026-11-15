@@ -7,6 +7,7 @@ import type { Env } from './env';
 export const DAILY = {
   ask: 25,
   swap: 60,
+  access: 20,
 } as const;
 
 export async function allow(env: Env, kind: keyof typeof DAILY, who: string): Promise<boolean> {

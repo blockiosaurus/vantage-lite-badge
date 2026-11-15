@@ -178,6 +178,7 @@ export function testEnv(over: Partial<Env> = {}): Env {
     JUPITER_ORIGIN: 'https://jup.test',
     SOLANA_RPC_URL: 'https://rpc.test',
     BADGE_SERVER_ORIGIN: 'https://badge.test',
+    VANTAGE_ACCESS_ORIGIN: 'https://vantage.test',
     ...over,
   } as Env;
   // The same storage path production uses, over the in-memory KV.

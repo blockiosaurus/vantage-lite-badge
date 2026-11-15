@@ -23,7 +23,7 @@ local BONK = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
 return {
   {name = "boots to the menu with a live market strip", run = function()
     local b = H.boot()
-    expect(H.rows() == "Pulse | Discover | Search | Watchlist | Portfolio | Ask Vantage | Settings", H.rows())
+    expect(H.rows() == "Get Vantage | Pulse | Discover | Search | Watchlist | Portfolio | Ask Vantage | Settings", H.rows())
     H.flush()
     shows("SOL $187.42") shows("-2.50%") shows("F&G 64 Greed") shows("by Metaplex")
     shows("SELECT open   CANCEL exit")
@@ -60,6 +60,34 @@ return {
       expect(marked(), item)
       H.press("back")
     end
+  end},
+
+  {name = "Get Vantage: a QR code for the full terminal, with a countdown and a new code on SELECT", run = function()
+    local b = H.boot()
+    H.flush()
+    H.choose("Get Vantage")
+    expect(b.requests[#b.requests] == "POST /v1/vantage-access", b.requests[#b.requests])
+    local qr = H.find("qr")[1]
+    expect(qr and qr.value == H.fixtures["vantage-access"].url, "QR holds the Vantage link")
+    expect(#qr.value <= 256, "fits a badge QR code")
+    shows("Vantage on your phone") shows("One account per badge") shows("Code works for 10:00")
+    H.advance(61000)
+    shows("Code works for 8:59")
+    H.press("select")
+    expect(b.requests[#b.requests] == "POST /v1/vantage-access", "SELECT asks for a new code")
+    shows("Code works for 10:00")
+    H.advance(601000)
+    shows("Code expired. SELECT for a new one")
+    expect(not qr.visible, "an expired code is hidden")
+  end},
+
+  {name = "Get Vantage on a badge nobody claimed says what to do", run = function()
+    local b = H.boot()
+    b.overrides["^/v1/vantage%-access"] = {status = 403, data = {error = "Claim this badge first"}}
+    H.flush()
+    H.choose("Get Vantage")
+    shows("Claim this badge first")
+    expect(#H.find("qr") == 0)
   end},
 
   {name = "CANCEL on the menu exits", run = function()

@@ -12,6 +12,7 @@
 //   POST /v1/swap          -> {id, url, out, impact, route}
 //   GET  /v1/swap/:id      -> {st, ...}
 //   POST /v1/ask           {q, mint?} -> {a}
+//   POST /v1/vantage-access -> {url, exp}  a Vantage access link for this badge's owner
 
 import { ask } from './ask';
 import { caller } from './badge-auth';
@@ -24,6 +25,7 @@ import type { ChartRange } from './sources/gecko';
 import { tokenInfo } from './sources/jupiter';
 import { isIntentId, newIntentId, preview, validateIntent } from './swap';
 import { UpstreamError } from './upstream';
+import { mintTicket, signingKey } from './vantage-access';
 import { ICON_PNG_BASE64 } from './icon';
 
 const CORS = {
@@ -144,6 +146,15 @@ async function badgeRoute(req: Request, env: Env, url: URL, route: string): Prom
         url: `solana:${env.PUBLIC_ORIGIN}/pay/${intent.id}`,
         ...look,
       });
+    }
+    if (route === 'vantage-access') {
+      const key = await signingKey(env.VANTAGE_ACCESS_SIGNING_KEY);
+      if (!key) return badgeError('Get Vantage is off on this server', 404);
+      // The badge server sends an owner's user id; an unclaimed badge has none.
+      if (!who.user) return badgeError('Claim this badge first', 403);
+      if (!(await allow(env, 'access', who.badge))) return badgeError('daily limit reached', 429);
+      const { ticket, expiresAt } = await mintTicket(key, who.user);
+      return badgeJson({ url: `${env.VANTAGE_ACCESS_ORIGIN}/badge?t=${ticket}`, exp: expiresAt });
     }
     if (route === 'ask') {
       if (!env.ANTHROPIC_API_KEY) return badgeError('Ask Vantage is off on this server', 404);
