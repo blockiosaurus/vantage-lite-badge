@@ -1,6 +1,6 @@
 -- Where the Vantage Lite server runs (server/ in this repo). It has to match
 -- "hosts" in app.json: the badge server refuses any other host.
 return {
-  SERVER = "https://vantage-lite.up.railway.app",
+  SERVER = "https://vantage-lite-badge-production.up.railway.app",
   VERSION = "1.0.0",
 }

@@ -6,7 +6,7 @@
 -- own Lua 5.5 (32-bit numbers), built by run.sh.
 
 local APP_DIR, FIXTURES = arg[1], arg[2]
-local SERVER = "https://vantage-lite.up.railway.app"
+local SERVER = "https://vantage-lite-badge-production.up.railway.app"
 local WALLET = "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr"
 
 ------------------------------------------------------------------ json

@@ -8,5 +8,5 @@
   "accent": "0052FF",
   "category": "tools",
   "permissions": ["http", "led", "profile"],
-  "hosts": ["vantage-lite.up.railway.app"]
+  "hosts": ["vantage-lite-badge-production.up.railway.app"]
 }
